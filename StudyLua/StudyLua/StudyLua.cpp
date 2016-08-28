@@ -1,4 +1,4 @@
-// StudyLua.cpp : ¶¨Òå¿ØÖÆÌ¨Ó¦ÓÃ³ÌĞòµÄÈë¿Úµã¡£
+// StudyLua.cpp : å®šä¹‰æ§åˆ¶å°åº”ç”¨ç¨‹åºçš„å…¥å£ç‚¹ã€‚
 //
 
 #include "stdafx.h"
@@ -31,7 +31,7 @@ int _tmain(int argc, _TCHAR* argv[])
 {	
 	int arr[] = { 1, 3, 8, 90, 100, 455 };
 	std::string str = "123.4";
-	
+	cout << "This is master branch" << endl;
 	char *ch = new char[100];
 	//lua_strx2number(str.c_str(), &ch);
 
