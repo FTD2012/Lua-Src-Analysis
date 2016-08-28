@@ -31,7 +31,7 @@ int _tmain(int argc, _TCHAR* argv[])
 {	
 	int arr[] = { 1, 3, 8, 90, 100, 455 };
 	std::string str = "123.4";
-	cout << "This is master branch！" << endl;
+	cout << "This is master branch" << endl;
 	char *ch = new char[100];
 	//lua_strx2number(str.c_str(), &ch);
 
