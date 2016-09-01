@@ -545,7 +545,7 @@ static int handle_luainit (lua_State *L) {
 
 
 /*
-** Main body of stand-alone interpreter (to be called in protected mode).
+** Main body of stand-alone interpreter(½âÊÍÆ÷) (to be called in protected mode).
 ** Reads the options and handles them all.
 */
 static int pmain (lua_State *L) {
