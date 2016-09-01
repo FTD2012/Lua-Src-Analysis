@@ -46,28 +46,28 @@
 /* thread status */
 #define LUA_OK		0
 /* 
-**	�����̴߳��ڹ����״̬�������߳������Ļᱻ����
-**	����ͨ��ʹ�� lua_yield �������߳�
+**	表明线程处于挂起的状态，整个线程上下文会被挂起，
+**	可以通过使用 lua_yield 来挂起线程
 */
 #define LUA_YIELD	1	
 /*
-**	�������д�����֮���߳�״̬���� LUA_ERRRUN
+**	所有运行错误发生之后，线程状态会变成 LUA_ERRRUN
 */
 #define LUA_ERRRUN	2
 /*
-**	�﷨����������߳�״̬����LUA_ERRSYNTAX
+**	语法分析错误后，线程状态会变成LUA_ERRSYNTAX
 */
 #define LUA_ERRSYNTAX	3
 /*
-**	�ڴ���������߳�״̬����LUA_ERRMEM
+**	内存分配错误后，线程状态会变成LUA_ERRMEM
 */
 #define LUA_ERRMEM	4
 /*
-**	������GC����
+**	估计是GC出错
 */
 #define LUA_ERRGCMM	5
 /*
-**	����һЩ����Ĵ�������̱߳��LUA_ERRERR
+**	其他一些溢出的错误回事线程变成LUA_ERRERR
 */
 #define LUA_ERRERR	6
 
@@ -76,7 +76,7 @@ typedef struct lua_State lua_State;
 
 
 // 08.25 15:10
-// Lua������������״̬λ
+// Lua基本数据类型状态位
 
 /*
 ** basic types
@@ -93,7 +93,7 @@ typedef struct lua_State lua_State;
 #define LUA_TUSERDATA		7	/* userdata */
 #define LUA_TTHREAD		8	/* thread */
 
-#define LUA_NUMTAGS		9 /* �����˼��˵lua�Ļ���������9�� */
+#define LUA_NUMTAGS		9 /* 这个意思是说lua的基本类型有9个 */
 
 
 
@@ -433,19 +433,19 @@ LUA_API void      (lua_setallocf) (lua_State *L, lua_Alloc f, void *ud);
 ** reference: http://www.tuicool.com/articles/YRnyayM
 */
 /*
-**	ÿ�����ú�����һ˲�䣬�����ȵ����û�ע���hook����
+**	每当条用函数的一瞬间，都会先调用用户注册的hook方法
 */
 #define LUA_MASKCALL	(1 << LUA_HOOKCALL)
 /*
-**	��lua��Ҫ�뿪������һ˲�䣬�����û�ס��hook����
+**	在lua正要离开函数的一瞬间，条用用户住的hook方法
 */
 #define LUA_MASKRET	(1 << LUA_HOOKRET)
 /*
-**	ÿִ��һ�д���ǰ��������ִ���û�ע���hook����
+**	每执行一行代码前，都会先执行用户注册的hook方法
 */
 #define LUA_MASKLINE	(1 << LUA_HOOKLINE)
 /*
-**	��������ִ�ж�����ָ�����ã� �����û�ע���hook����
+**	可以设置执行多少条指令后调用， 调用用户注册的hook方法
 */
 #define LUA_MASKCOUNT	(1 << LUA_HOOKCOUNT)
 

@@ -26,7 +26,7 @@
 
 // 08.24
 // ephemron
-// ÉúÃü¼°Æä¶ÌÔİÖ®Îï£»¸¡ÓÎ
+// ç”Ÿå‘½åŠå…¶çŸ­æš‚ä¹‹ç‰©ï¼›æµ®æ¸¸
 
 
 /* how much to allocate before next GC step */

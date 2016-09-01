@@ -39,9 +39,9 @@ LUAI_DDEF const TValue luaO_nilobject_ = { NILCONSTANT };
 ** eeeee != 0 and (xxx) otherwise.
 */
 int luaO_int2fb(unsigned int x) {
-	int e = 0;  /* exponent | Ö¸Êı */
+	int e = 0;  /* exponent | æŒ‡æ•° */
 	if (x < 8) return x;
-	while (x >= (8 << 4)) {  /* coarse steps | ´Ö²ÚµÄ | ( 8 << 4 ) = 128*/
+	while (x >= (8 << 4)) {  /* coarse steps | ç²—ç³™çš„ | ( 8 << 4 ) = 128*/
 		x = (x + 0xf) >> 4;  /* x = ceil(x / 16) */
 		e += 4;
 	}
@@ -185,14 +185,14 @@ static int isneg(const char **s) {
 /*
 **	maximum number of significant digits to read (to avoid overflows
 **	even with single floats)
-**	significant digits:´óĞ§Êı×Ö
+**	significant digits:å¤§æ•ˆæ•°å­—
 */
 #define MAXSIGDIG	30
 
 /*
 ** convert an hexadecimal numeric string to a number, following
 ** C99 specification for 'strtod'
-** 'strtod':½«×Ö·û´®×ª»»³É¸¡µãÊı(#include <stdlib.h>)
+** 'strtod':å°†å­—ç¬¦ä¸²è½¬æ¢æˆæµ®ç‚¹æ•°(#include <stdlib.h>)
 */
 static lua_Number lua_strx2number(const char *s, char **endptr) {
 	int dot = lua_getlocaledecpoint();
