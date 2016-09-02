@@ -1,124 +1,124 @@
-/+ACo-
-+ACoAKg- +ACQ-Id: lopcodes.c,v 1.55 2015/01/05 13:48:33 roberto Exp +ACQ-
-+ACoAKg- Opcodes for Lua virtual machine
-+ACoAKg- See Copyright Notice in lua.h
-+ACo-/
+/*
+** $Id: lopcodes.c,v 1.55 2015/01/05 13:48:33 roberto Exp $
+** Opcodes for Lua virtual machine
+** See Copyright Notice in lua.h
+*/
 
-+ACM-define lopcodes+AF8-c
-+ACM-define LUA+AF8-CORE
+#define lopcodes_c
+#define LUA_CORE
 
-+ACM-include +ACI-lprefix.h+ACI-
-
-
-+ACM-include +ADw-stddef.h+AD4-
-
-+ACM-include +ACI-lopcodes.h+ACI-
+#include "lprefix.h"
 
 
-/+ACo- ORDER OP +ACo-/
+#include <stddef.h>
 
-LUAI+AF8-DDEF const char +ACo-const luaP+AF8-opnames+AFs-NUM+AF8-OPCODES+-1+AF0- +AD0- +AHs-
-  +ACI-MOVE+ACI-,
-  +ACI-LOADK+ACI-,
-  +ACI-LOADKX+ACI-,
-  +ACI-LOADBOOL+ACI-,
-  +ACI-LOADNIL+ACI-,
-  +ACI-GETUPVAL+ACI-,
-  +ACI-GETTABUP+ACI-,
-  +ACI-GETTABLE+ACI-,
-  +ACI-SETTABUP+ACI-,
-  +ACI-SETUPVAL+ACI-,
-  +ACI-SETTABLE+ACI-,
-  +ACI-NEWTABLE+ACI-,
-  +ACI-SELF+ACI-,
-  +ACI-ADD+ACI-,
-  +ACI-SUB+ACI-,
-  +ACI-MUL+ACI-,
-  +ACI-MOD+ACI-,
-  +ACI-POW+ACI-,
-  +ACI-DIV+ACI-,
-  +ACI-IDIV+ACI-,
-  +ACI-BAND+ACI-,
-  +ACI-BOR+ACI-,
-  +ACI-BXOR+ACI-,
-  +ACI-SHL+ACI-,
-  +ACI-SHR+ACI-,
-  +ACI-UNM+ACI-,
-  +ACI-BNOT+ACI-,
-  +ACI-NOT+ACI-,
-  +ACI-LEN+ACI-,
-  +ACI-CONCAT+ACI-,
-  +ACI-JMP+ACI-,
-  +ACI-EQ+ACI-,
-  +ACI-LT+ACI-,
-  +ACI-LE+ACI-,
-  +ACI-TEST+ACI-,
-  +ACI-TESTSET+ACI-,
-  +ACI-CALL+ACI-,
-  +ACI-TAILCALL+ACI-,
-  +ACI-RETURN+ACI-,
-  +ACI-FORLOOP+ACI-,
-  +ACI-FORPREP+ACI-,
-  +ACI-TFORCALL+ACI-,
-  +ACI-TFORLOOP+ACI-,
-  +ACI-SETLIST+ACI-,
-  +ACI-CLOSURE+ACI-,
-  +ACI-VARARG+ACI-,
-  +ACI-EXTRAARG+ACI-,
+#include "lopcodes.h"
+
+
+/* ORDER OP */
+
+LUAI_DDEF const char *const luaP_opnames[NUM_OPCODES+1] = {
+  "MOVE",
+  "LOADK",
+  "LOADKX",
+  "LOADBOOL",
+  "LOADNIL",
+  "GETUPVAL",
+  "GETTABUP",
+  "GETTABLE",
+  "SETTABUP",
+  "SETUPVAL",
+  "SETTABLE",
+  "NEWTABLE",
+  "SELF",
+  "ADD",
+  "SUB",
+  "MUL",
+  "MOD",
+  "POW",
+  "DIV",
+  "IDIV",
+  "BAND",
+  "BOR",
+  "BXOR",
+  "SHL",
+  "SHR",
+  "UNM",
+  "BNOT",
+  "NOT",
+  "LEN",
+  "CONCAT",
+  "JMP",
+  "EQ",
+  "LT",
+  "LE",
+  "TEST",
+  "TESTSET",
+  "CALL",
+  "TAILCALL",
+  "RETURN",
+  "FORLOOP",
+  "FORPREP",
+  "TFORCALL",
+  "TFORLOOP",
+  "SETLIST",
+  "CLOSURE",
+  "VARARG",
+  "EXTRAARG",
   NULL
-+AH0AOw-
+};
 
 
-+ACM-define opmode(t,a,b,c,m) (((t)+ADwAPA-7) +AHw- ((a)+ADwAPA-6) +AHw- ((b)+ADwAPA-4) +AHw- ((c)+ADwAPA-2) +AHw- (m))
+#define opmode(t,a,b,c,m) (((t)<<7) | ((a)<<6) | ((b)<<4) | ((c)<<2) | (m))
 
-LUAI+AF8-DDEF const lu+AF8-byte luaP+AF8-opmodes+AFs-NUM+AF8-OPCODES+AF0- +AD0- +AHs-
-/+ACo-       T  A    B       C     mode		   opcode	+ACo-/
-  opmode(0, 1, OpArgR, OpArgN, iABC)		/+ACo- OP+AF8-MOVE +ACo-/
- ,opmode(0, 1, OpArgK, OpArgN, iABx)		/+ACo- OP+AF8-LOADK +ACo-/
- ,opmode(0, 1, OpArgN, OpArgN, iABx)		/+ACo- OP+AF8-LOADKX +ACo-/
- ,opmode(0, 1, OpArgU, OpArgU, iABC)		/+ACo- OP+AF8-LOADBOOL +ACo-/
- ,opmode(0, 1, OpArgU, OpArgN, iABC)		/+ACo- OP+AF8-LOADNIL +ACo-/
- ,opmode(0, 1, OpArgU, OpArgN, iABC)		/+ACo- OP+AF8-GETUPVAL +ACo-/
- ,opmode(0, 1, OpArgU, OpArgK, iABC)		/+ACo- OP+AF8-GETTABUP +ACo-/
- ,opmode(0, 1, OpArgR, OpArgK, iABC)		/+ACo- OP+AF8-GETTABLE +ACo-/
- ,opmode(0, 0, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-SETTABUP +ACo-/
- ,opmode(0, 0, OpArgU, OpArgN, iABC)		/+ACo- OP+AF8-SETUPVAL +ACo-/
- ,opmode(0, 0, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-SETTABLE +ACo-/
- ,opmode(0, 1, OpArgU, OpArgU, iABC)		/+ACo- OP+AF8-NEWTABLE +ACo-/
- ,opmode(0, 1, OpArgR, OpArgK, iABC)		/+ACo- OP+AF8-SELF +ACo-/
- ,opmode(0, 1, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-ADD +ACo-/
- ,opmode(0, 1, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-SUB +ACo-/
- ,opmode(0, 1, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-MUL +ACo-/
- ,opmode(0, 1, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-MOD +ACo-/
- ,opmode(0, 1, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-POW +ACo-/
- ,opmode(0, 1, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-DIV +ACo-/
- ,opmode(0, 1, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-IDIV +ACo-/
- ,opmode(0, 1, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-BAND +ACo-/
- ,opmode(0, 1, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-BOR +ACo-/
- ,opmode(0, 1, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-BXOR +ACo-/
- ,opmode(0, 1, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-SHL +ACo-/
- ,opmode(0, 1, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-SHR +ACo-/
- ,opmode(0, 1, OpArgR, OpArgN, iABC)		/+ACo- OP+AF8-UNM +ACo-/
- ,opmode(0, 1, OpArgR, OpArgN, iABC)		/+ACo- OP+AF8-BNOT +ACo-/
- ,opmode(0, 1, OpArgR, OpArgN, iABC)		/+ACo- OP+AF8-NOT +ACo-/
- ,opmode(0, 1, OpArgR, OpArgN, iABC)		/+ACo- OP+AF8-LEN +ACo-/
- ,opmode(0, 1, OpArgR, OpArgR, iABC)		/+ACo- OP+AF8-CONCAT +ACo-/
- ,opmode(0, 0, OpArgR, OpArgN, iAsBx)		/+ACo- OP+AF8-JMP +ACo-/
- ,opmode(1, 0, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-EQ +ACo-/
- ,opmode(1, 0, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-LT +ACo-/
- ,opmode(1, 0, OpArgK, OpArgK, iABC)		/+ACo- OP+AF8-LE +ACo-/
- ,opmode(1, 0, OpArgN, OpArgU, iABC)		/+ACo- OP+AF8-TEST +ACo-/
- ,opmode(1, 1, OpArgR, OpArgU, iABC)		/+ACo- OP+AF8-TESTSET +ACo-/
- ,opmode(0, 1, OpArgU, OpArgU, iABC)		/+ACo- OP+AF8-CALL +ACo-/
- ,opmode(0, 1, OpArgU, OpArgU, iABC)		/+ACo- OP+AF8-TAILCALL +ACo-/
- ,opmode(0, 0, OpArgU, OpArgN, iABC)		/+ACo- OP+AF8-RETURN +ACo-/
- ,opmode(0, 1, OpArgR, OpArgN, iAsBx)		/+ACo- OP+AF8-FORLOOP +ACo-/
- ,opmode(0, 1, OpArgR, OpArgN, iAsBx)		/+ACo- OP+AF8-FORPREP +ACo-/
- ,opmode(0, 0, OpArgN, OpArgU, iABC)		/+ACo- OP+AF8-TFORCALL +ACo-/
- ,opmode(0, 1, OpArgR, OpArgN, iAsBx)		/+ACo- OP+AF8-TFORLOOP +ACo-/
- ,opmode(0, 0, OpArgU, OpArgU, iABC)		/+ACo- OP+AF8-SETLIST +ACo-/
- ,opmode(0, 1, OpArgU, OpArgN, iABx)		/+ACo- OP+AF8-CLOSURE +ACo-/
- ,opmode(0, 1, OpArgU, OpArgN, iABC)		/+ACo- OP+AF8-VARARG +ACo-/
- ,opmode(0, 0, OpArgU, OpArgU, iAx)		/+ACo- OP+AF8-EXTRAARG +ACo-/
-+AH0AOw-
+LUAI_DDEF const lu_byte luaP_opmodes[NUM_OPCODES] = {
+/*       T  A    B       C     mode		   opcode	*/
+  opmode(0, 1, OpArgR, OpArgN, iABC)		/* OP_MOVE */
+ ,opmode(0, 1, OpArgK, OpArgN, iABx)		/* OP_LOADK */
+ ,opmode(0, 1, OpArgN, OpArgN, iABx)		/* OP_LOADKX */
+ ,opmode(0, 1, OpArgU, OpArgU, iABC)		/* OP_LOADBOOL */
+ ,opmode(0, 1, OpArgU, OpArgN, iABC)		/* OP_LOADNIL */
+ ,opmode(0, 1, OpArgU, OpArgN, iABC)		/* OP_GETUPVAL */
+ ,opmode(0, 1, OpArgU, OpArgK, iABC)		/* OP_GETTABUP */
+ ,opmode(0, 1, OpArgR, OpArgK, iABC)		/* OP_GETTABLE */
+ ,opmode(0, 0, OpArgK, OpArgK, iABC)		/* OP_SETTABUP */
+ ,opmode(0, 0, OpArgU, OpArgN, iABC)		/* OP_SETUPVAL */
+ ,opmode(0, 0, OpArgK, OpArgK, iABC)		/* OP_SETTABLE */
+ ,opmode(0, 1, OpArgU, OpArgU, iABC)		/* OP_NEWTABLE */
+ ,opmode(0, 1, OpArgR, OpArgK, iABC)		/* OP_SELF */
+ ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_ADD */
+ ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_SUB */
+ ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_MUL */
+ ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_MOD */
+ ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_POW */
+ ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_DIV */
+ ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_IDIV */
+ ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_BAND */
+ ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_BOR */
+ ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_BXOR */
+ ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_SHL */
+ ,opmode(0, 1, OpArgK, OpArgK, iABC)		/* OP_SHR */
+ ,opmode(0, 1, OpArgR, OpArgN, iABC)		/* OP_UNM */
+ ,opmode(0, 1, OpArgR, OpArgN, iABC)		/* OP_BNOT */
+ ,opmode(0, 1, OpArgR, OpArgN, iABC)		/* OP_NOT */
+ ,opmode(0, 1, OpArgR, OpArgN, iABC)		/* OP_LEN */
+ ,opmode(0, 1, OpArgR, OpArgR, iABC)		/* OP_CONCAT */
+ ,opmode(0, 0, OpArgR, OpArgN, iAsBx)		/* OP_JMP */
+ ,opmode(1, 0, OpArgK, OpArgK, iABC)		/* OP_EQ */
+ ,opmode(1, 0, OpArgK, OpArgK, iABC)		/* OP_LT */
+ ,opmode(1, 0, OpArgK, OpArgK, iABC)		/* OP_LE */
+ ,opmode(1, 0, OpArgN, OpArgU, iABC)		/* OP_TEST */
+ ,opmode(1, 1, OpArgR, OpArgU, iABC)		/* OP_TESTSET */
+ ,opmode(0, 1, OpArgU, OpArgU, iABC)		/* OP_CALL */
+ ,opmode(0, 1, OpArgU, OpArgU, iABC)		/* OP_TAILCALL */
+ ,opmode(0, 0, OpArgU, OpArgN, iABC)		/* OP_RETURN */
+ ,opmode(0, 1, OpArgR, OpArgN, iAsBx)		/* OP_FORLOOP */
+ ,opmode(0, 1, OpArgR, OpArgN, iAsBx)		/* OP_FORPREP */
+ ,opmode(0, 0, OpArgN, OpArgU, iABC)		/* OP_TFORCALL */
+ ,opmode(0, 1, OpArgR, OpArgN, iAsBx)		/* OP_TFORLOOP */
+ ,opmode(0, 0, OpArgU, OpArgU, iABC)		/* OP_SETLIST */
+ ,opmode(0, 1, OpArgU, OpArgN, iABx)		/* OP_CLOSURE */
+ ,opmode(0, 1, OpArgU, OpArgN, iABC)		/* OP_VARARG */
+ ,opmode(0, 0, OpArgU, OpArgU, iAx)		/* OP_EXTRAARG */
+};
 
