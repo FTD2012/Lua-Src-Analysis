@@ -191,7 +191,7 @@ static int msghandler (lua_State *L) {
 
 /*
 ** Interface to 'lua_pcall', which sets appropriate message function
-** and C-signal handler. Used to run all chunksï¼ˆæ–‡ä»¶ï¼‰.
+** and C-signal handler. Used to run all chunks£¨ÎÄ¼ş£©.
 */
 static int docall (lua_State *L, int narg, int nres) {
   int status;
@@ -545,7 +545,7 @@ static int handle_luainit (lua_State *L) {
 
 
 /*
-** Main body of stand-alone interpreter(è§£é‡Šå™¨) (to be called in protected mode).
+** Main body of stand-alone interpreter(½âÊÍÆ÷) (to be called in protected mode).
 ** Reads the options and handles them all.
 */
 static int pmain (lua_State *L) {
@@ -590,7 +590,7 @@ static int pmain (lua_State *L) {
 }
 
 /* 
-**	Lua ä¸»å‡½æ•°å…¥å£ 
+**	Lua Ö÷º¯ÊıÈë¿Ú 
 */
 
 

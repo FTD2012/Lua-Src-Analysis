@@ -30,9 +30,9 @@
 
 /*
 ** tags for Tagged Values have the following use of bits:
-** bits 0-3: actual tag (a LUA_T* value ) | ï¼Ÿï¼Ÿï¼Ÿ
-** bits 4-5: variant bits | å˜é‡æ ‡å¿—ä½
-** bit 6: whether value is collectable | value å¯å›æ”¶ï¼Ÿ
+** bits 0-3: actual tag (a LUA_T* value ) | £¿£¿£¿
+** bits 4-5: variant bits | ±äÁ¿±êÖ¾Î»
+** bit 6: whether value is collectable | value ¿É»ØÊÕ£¿
 */
 
 
@@ -59,7 +59,7 @@
 #define LUA_TNUMINT	(LUA_TNUMBER | (1 << 4))  /* integer numbers | 3 | ( 1 << 4 ) = 16 */
 
 
-/* Bit mark for collectable types | å¯å›æ”¶ç±»å‹çš„æ ‡å¿—ä½ | ( 1 << 6 ) = 64 */
+/* Bit mark for collectable types | ¿É»ØÊÕÀàĞÍµÄ±êÖ¾Î» | ( 1 << 6 ) = 64 */
 #define BIT_ISCOLLECTABLE	(1 << 6) 
 
 /* mark a tag as collectable */
@@ -68,8 +68,8 @@
 
 // $08.24 21:42$
 // GCObject
-// luaçš„åƒåœ¾å›æ”¶å¤„ç†æ–¹å¼
-// 1.è¿™æ˜¯ä¸ªé“¾è¡¨
+// luaµÄÀ¬»ø»ØÊÕ´¦Àí·½Ê½
+// 1.ÕâÊÇ¸öÁ´±í
 //
 
 
@@ -114,9 +114,9 @@ typedef union Value {
 } Value;
 
 /*
-**	luaä¸­çš„åŸºæœ¬ç±»å‹é‡‡ç”¨çš„æ˜¯ å€¼ + ç±»å‹ çš„å­˜å‚¨æ–¹å¼
-**	value_	å€¼
-**	tt_	ç±»å‹
+**	luaÖĞµÄ»ù±¾ÀàĞÍ²ÉÓÃµÄÊÇ Öµ + ÀàĞÍ µÄ´æ´¢·½Ê½
+**	value_	Öµ
+**	tt_	ÀàĞÍ
 */
 #define TValuefields	Value value_; int tt_
 
@@ -129,18 +129,18 @@ typedef struct lua_TValue {
 
 /* 
 **	macro defining a nil value 
-**	å®å®šä¹‰ nil
+**	ºê¶¨Òå nil
 */
 #define NILCONSTANT	{NULL}, LUA_TNIL
 
 /*
-**	è·å–å¯¹è±¡çš„ å€¼
+**	»ñÈ¡¶ÔÏóµÄ Öµ
 */
 #define val_(o)		((o)->value_)
 
 /* 
 **	raw type tag of a TValue 
-**	TValue çš„åŸå§‹ç±»å‹
+**	TValue µÄÔ­Ê¼ÀàĞÍ
 */
 #define rttype(o)	((o)->tt_)
 
@@ -412,14 +412,14 @@ const TValue *io = (o); Udata *iu = (u); \
 **
 **	Description of an upvalue for function prototypes
 **
-**	Luaä¸­çš„å‡½æ•°æ˜¯ä¸€é˜¶ç±»å‹å€¼(first-classã€€value),
-**	å®šä¹‰å‡½æ•°å°±è±¡åˆ›å»ºæ™®é€šç±»å‹å€¼ä¸€æ ·(åªä¸è¿‡å‡½æ•°ç±»å‹å€¼çš„æ•°æ®ä¸»è¦æ˜¯ä¸€æ¡æ¡æŒ‡ä»¤è€Œå·²),
-**	æ‰€ä»¥åœ¨å‡½æ•°ä½“ä¸­ä»ç„¶å¯ä»¥å®šä¹‰å‡½æ•°.å‡è®¾å‡½æ•°f2å®šä¹‰åœ¨å‡½æ•°f1ä¸­,é‚£ä¹ˆå°±ç§°f2ä¸ºf1çš„å†…åµŒ(inner)å‡½æ•°,
-**	f1ä¸ºf2çš„å¤–åŒ…(enclosing)å‡½æ•°,å¤–åŒ…å’Œå†…åµŒéƒ½å…·æœ‰ä¼ é€’æ€§,
-**	å³f2çš„å†…åµŒå¿…ç„¶æ˜¯f1çš„å†…åµŒ,è€Œf1çš„å¤–åŒ…ä¹Ÿä¸€å®šæ˜¯f2çš„å¤–åŒ….
-**	å†…åµŒå‡½æ•°å¯ä»¥è®¿é—®å¤–åŒ…å‡½æ•°å·²ç»åˆ›å»ºçš„æ‰€æœ‰å±€éƒ¨å˜é‡,è¿™ç§ç‰¹æ€§ä¾¿æ˜¯æ‰€è°“çš„è¯æ³•å®šç•Œ(lexicalã€€scoping),
-**	è€Œè¿™äº›å±€éƒ¨å˜é‡åˆ™ç§°ä¸ºè¯¥å†…åµŒå‡½æ•°çš„å¤–éƒ¨å±€éƒ¨å˜é‡(externalã€€localã€€variable)
-**	æˆ–è€…upvalue(è¿™ä¸ªè¯å¤šå°‘ä¼šè®©äººäº§ç”Ÿè¯¯è§£,å› ä¸ºupvalueå®é™…æŒ‡çš„æ˜¯å˜é‡è€Œä¸æ˜¯å€¼)
+**	LuaÖĞµÄº¯ÊıÊÇÒ»½×ÀàĞÍÖµ(first-class¡¡value),
+**	¶¨Òåº¯Êı¾ÍÏó´´½¨ÆÕÍ¨ÀàĞÍÖµÒ»Ñù(Ö»²»¹ıº¯ÊıÀàĞÍÖµµÄÊı¾İÖ÷ÒªÊÇÒ»ÌõÌõÖ¸Áî¶øÒÑ),
+**	ËùÒÔÔÚº¯ÊıÌåÖĞÈÔÈ»¿ÉÒÔ¶¨Òåº¯Êı.¼ÙÉèº¯Êıf2¶¨ÒåÔÚº¯Êıf1ÖĞ,ÄÇÃ´¾Í³Æf2Îªf1µÄÄÚÇ¶(inner)º¯Êı,
+**	f1Îªf2µÄÍâ°ü(enclosing)º¯Êı,Íâ°üºÍÄÚÇ¶¶¼¾ßÓĞ´«µİĞÔ,
+**	¼´f2µÄÄÚÇ¶±ØÈ»ÊÇf1µÄÄÚÇ¶,¶øf1µÄÍâ°üÒ²Ò»¶¨ÊÇf2µÄÍâ°ü.
+**	ÄÚÇ¶º¯Êı¿ÉÒÔ·ÃÎÊÍâ°üº¯ÊıÒÑ¾­´´½¨µÄËùÓĞ¾Ö²¿±äÁ¿,ÕâÖÖÌØĞÔ±ãÊÇËùÎ½µÄ´Ê·¨¶¨½ç(lexical¡¡scoping),
+**	¶øÕâĞ©¾Ö²¿±äÁ¿Ôò³ÆÎª¸ÃÄÚÇ¶º¯ÊıµÄÍâ²¿¾Ö²¿±äÁ¿(external¡¡local¡¡variable)
+**	»òÕßupvalue(Õâ¸ö´Ê¶àÉÙ»áÈÃÈË²úÉúÎó½â,ÒòÎªupvalueÊµ¼ÊÖ¸µÄÊÇ±äÁ¿¶ø²»ÊÇÖµ)
 */
 typedef struct Upvaldesc {
 	TString *name;  /* upvalue name (for debug information) */
@@ -445,7 +445,7 @@ typedef struct LocVar {
 typedef struct Proto {
 	CommonHeader;
 	lu_byte numparams;  /* number of fixed parameters */
-	lu_byte is_vararg;  /* 2: declared vararg; 1: uses vararg | var arguments, å˜é‡åˆ—è¡¨*/
+	lu_byte is_vararg;  /* 2: declared vararg; 1: uses vararg | var arguments, ±äÁ¿ÁĞ±í*/
 	lu_byte maxstacksize;  /* number of registers needed by this function */
 	int sizeupvalues;  /* size of 'upvalues' */
 	int sizek;  /* size of 'k' */
@@ -456,7 +456,7 @@ typedef struct Proto {
 	int linedefined;  /* debug information  */
 	int lastlinedefined;  /* debug information  */
 	TValue *k;  /* constants used by the function */
-	Instruction *code;  /* opcodes | æ“ä½œç */
+	Instruction *code;  /* opcodes | ²Ù×÷Âë*/
 	struct Proto **p;  /* functions defined inside the function */
 	int *lineinfo;  /* map from opcodes to source lines (debug information) */
 	LocVar *locvars;  /* information about local variables (debug information) */

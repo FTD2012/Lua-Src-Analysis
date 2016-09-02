@@ -28,7 +28,7 @@
 /*
 ** Lua will use at most ~(2^LUAI_HASHLIMIT) bytes from a string to
 ** compute its hash
-** å¯¹äºé•¿å­—ç¬¦ä¸²ï¼ŒLuaä»…é€‚ç”¨ 2^5 (= 32) ä½è®¡ç®—hashå€¼
+** ¶ÔÓÚ³¤×Ö·û´®£¬Lua½öÊÊÓÃ 2^5 (= 32) Î»¼ÆËãhashÖµ
 */
 #if !defined(LUAI_HASHLIMIT)
 #define LUAI_HASHLIMIT		5

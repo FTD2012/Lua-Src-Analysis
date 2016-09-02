@@ -1,21 +1,21 @@
 /*
-**	æ¨¡æ‹Ÿå®ç°luaæºä»£ç 
+**	Ä£ÄâÊµÏÖluaÔ´´úÂë
 **	@author ljm
 */
 #ifndef studylua_h
 #define studylua_h
 
 /*
-**	å¼•å…¥å¯¹è±¡ size_t
+**	ÒıÈë¶ÔÏó size_t
 **	typedef unsigned int size_t;
-**	size_t ç”¨æ¥è®°å½•å¤§å°çš„æ•°æ®ç±»å‹ï¼Œegï¼Œæ•°ç»„çš„é•¿åº¦ï¼Œå¯¹è±¡çš„ä¸ªæ•°
-**	å½“ç½‘ä¸Šèµ„æ–™æ˜¾ç¤º size_t å®šä¹‰åœ¨ #include <stddef.h>
+**	size_t ÓÃÀ´¼ÇÂ¼´óĞ¡µÄÊı¾İÀàĞÍ£¬eg£¬Êı×éµÄ³¤¶È£¬¶ÔÏóµÄ¸öÊı
+**	µ±ÍøÉÏ×ÊÁÏÏÔÊ¾ size_t ¶¨ÒåÔÚ #include <stddef.h>
 **
 */
 /*
-**	å¼•å…¥å¯¹è±¡ ptrdiff_t
+**	ÒıÈë¶ÔÏó ptrdiff_t
 **	typedef int prtdiff_t;
-**	ä¸æœºå™¨å­—é•¿ç›¸å…³çš„æ•°æ®ç±»å‹ï¼Œç”¨æ¥ä¿å­˜2ä¸ªæŒ‡é’ˆå‡æ³•æ“ä½œçš„ç»“æœ
+**	Óë»úÆ÷×Ö³¤Ïà¹ØµÄÊı¾İÀàĞÍ£¬ÓÃÀ´±£´æ2¸öÖ¸Õë¼õ·¨²Ù×÷µÄ½á¹û
 */
 #include <crtdefs.h>
 
@@ -23,7 +23,7 @@
 #define LUA_NUMBER double
 #define LUA_KCONTEXT ptrdiff_t
 /*
-**	luaåŸºæœ¬æ•°æ®ç±»å‹çŠ¶æ€ä½
+**	lua»ù±¾Êı¾İÀàĞÍ×´Ì¬Î»
 */
 #define LUA_TNONE (-1)
 #define LUA_TNIL	0
@@ -61,7 +61,7 @@ typedef enum {
 #define CommonHeader GCObject *next;lu_byte tt;lu_byte marked
 
 /*
-**	luaçš„åŸºæœ¬ä¹¦ç±»å‹
+**	luaµÄ»ù±¾ÊéÀàĞÍ
 */
 typedef union Value{
 	GCObject *gc;
@@ -126,14 +126,14 @@ typedef struct Table {
 } Table;
 
 /*
-**	luaçš„åƒåœ¾å›æ”¶æœºåˆ¶
+**	luaµÄÀ¬»ø»ØÊÕ»úÖÆ
 */
 struct GCObject {
 	CommonHeader;
 };
 
 /*
-**	è°ƒç”¨ä¿¡æ¯
+**	µ÷ÓÃĞÅÏ¢
 */
 typedef struct CallInfo {
 	StkId func;

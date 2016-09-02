@@ -1,4 +1,4 @@
-// StudyLua.cpp : å®šä¹‰æ§åˆ¶å°åº”ç”¨ç¨‹åºçš„å…¥å£ç‚¹ã€‚
+// StudyLua.cpp : ¶¨Òå¿ØÖÆÌ¨Ó¦ÓÃ³ÌĞòµÄÈë¿Úµã¡£
 //
 
 #include "stdafx.h"
@@ -27,11 +27,22 @@ void Binarycout(int n)
 	cout << endl;
 }
 
+void myBinarycout(int n) {
+	cout << "This is my Binary!" << endl;
+	for (int i = 31; i >= 0; i--) {
+		cout << (n >> i);
+	}
+	cout << endl;
+}
+
 int myceil_16(int x) {
 	return (x + 0xf) >> 4; /* x = ceil( x / 16 ) */
 }
 int _tmain(int argc, _TCHAR* argv[])
 {
+	Binarycout(5);
+	myBinarycout(5);
+
 	char a[10] = { "1213" }, b[10];
 	int arr[] = { 1, 3, 8, 90, 100, 455 };
 	std::string str = "123.4";

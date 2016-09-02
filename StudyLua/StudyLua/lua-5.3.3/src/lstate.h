@@ -114,20 +114,20 @@ of luaV_execute */
 
 /*
 **	'global state', shared by all threads of this state
-**	å…¨å±€è„šæœ¬çŠ¶æ€æ•°æ®
-**	Luaè¿™é—¨è¯­è¨€è€ƒè™‘äº†å¤šçº¿ç¨‹çš„æƒ…å†µï¼Œåœ¨è„šæœ¬ç©ºé—´ä¸­èƒ½å¤Ÿå¼€å¤šä¸ª
-**	çº¿ç¨‹ç›¸å…³è„šæœ¬ä¸Šä¸‹æ–‡ï¼Œè€Œå¤§å®¶ä¼šå…±ç”¨ä¸€ä¸ªå…¨å±€è„šæœ¬çŠ¶æ€æ•°æ®
+**	È«¾Ö½Å±¾×´Ì¬Êı¾İ
+**	LuaÕâÃÅÓïÑÔ¿¼ÂÇÁË¶àÏß³ÌµÄÇé¿ö£¬ÔÚ½Å±¾¿Õ¼äÖĞÄÜ¹»¿ª¶à¸ö
+**	Ïß³ÌÏà¹Ø½Å±¾ÉÏÏÂÎÄ£¬¶ø´ó¼Ò»á¹²ÓÃÒ»¸öÈ«¾Ö½Å±¾×´Ì¬Êı¾İ
 **	reference: http://www.tuicool.com/articles/YRnyayM
 */
 typedef struct global_State {
 	lua_Alloc frealloc;  /* function to reallocate memory */
-	void *ud;         /* auxiliaryï¼ˆè¾…åŠ©çš„ï¼‰ data to 'frealloc' */
+	void *ud;         /* auxiliary£¨¸¨ÖúµÄ£© data to 'frealloc' */
 	l_mem totalbytes;  /* number of bytes currently allocated - GCdebt */
 	l_mem GCdebt;  /* bytes allocated not yet compensated by the collector */
 	lu_mem GCmemtrav;  /* memory traversed by the GC */
 	lu_mem GCestimate;  /* an estimate of the non-garbage memory in use */
-	stringtable strt;  /* hash table for strings | TString å…¨å±€å­—ç¬¦ä¸²å“ˆå¸Œè¡¨*/
-	TValue l_registry;	/* å¯¹åº” LUA REGISTRYINDEX çš„å…¨å±€table*/
+	stringtable strt;  /* hash table for strings | TString È«¾Ö×Ö·û´®¹şÏ£±í*/
+	TValue l_registry;	/* ¶ÔÓ¦ LUA REGISTRYINDEX µÄÈ«¾Ötable*/
 	unsigned int seed;  /* randomized seed for hashes */
 	lu_byte currentwhite;
 	lu_byte gcstate;  /* state of garbage collector */
@@ -135,7 +135,7 @@ typedef struct global_State {
 	lu_byte gcrunning;  /* true if GC is running */
 	GCObject *allgc;  /* list of all collectable objects */
 	GCObject **sweepgc;  /* current position of sweep in list */
-	GCObject *finobj;  /* list of collectable objects with finalizers(ç»ˆç»“) */
+	GCObject *finobj;  /* list of collectable objects with finalizers(ÖÕ½á) */
 	GCObject *gray;  /* list of gray objects */
 	GCObject *grayagain;  /* list of objects to be traversed atomically */
 	GCObject *weak;  /* list of tables with weak values */
@@ -146,12 +146,12 @@ typedef struct global_State {
 	struct lua_State *twups;  /* list of threads with open upvalues */
 	unsigned int gcfinnum;  /* number of finalizers to call in each GC step */
 	int gcpause;  /* size of pause between successive GCs */
-	int gcstepmul;  /* GC 'granularity' (é—´éš”å°ºå¯¸,ç²’åº¦) */
+	int gcstepmul;  /* GC 'granularity' (¼ä¸ô³ß´ç,Á£¶È) */
 	lua_CFunction panic;  /* to be called in unprotected errors */
 	struct lua_State *mainthread;
 	const lua_Number *version;  /* pointer to version number */
 	TString *memerrmsg;  /* memory-error message */
-	TString *tmname[TM_N];  /* array with tag-method names | å…ƒæ–¹æ³•çš„åç§°å­—ç¬¦ä¸² */
+	TString *tmname[TM_N];  /* array with tag-method names | Ôª·½·¨µÄÃû³Æ×Ö·û´® */
 	struct Table *mt[LUA_NUMTAGS];  /* metatables for basic types */
 	TString *strcache[STRCACHE_N][STRCACHE_M];  /* cache for strings in API */
 } global_State;
@@ -159,33 +159,33 @@ typedef struct global_State {
 
 /*
 ** 'per thread' state
-** ä¸çº¿ç¨‹ç›¸å…³çš„è„šæœ¬ä¸Šä¸‹æ–‡lua_State
+** ÓëÏß³ÌÏà¹ØµÄ½Å±¾ÉÏÏÂÎÄlua_State
 ** reference: http://www.tuicool.com/articles/YRnyayM
 */
 struct lua_State {
 	CommonHeader;
 	unsigned short nci;  /* number of items in 'ci' list */
-	lu_byte status;	/* çº¿ç¨‹è„šæœ¬çš„çŠ¶æ€, å¯é€‰çŠ¶æ€ #include <lua.h> */
-	StkId top;  /* first free slot in the stack | æŒ‡å‘å½“å‰çº¿ç¨‹æ ˆçš„æ ˆé¡¶æŒ‡é’ˆ */
-	global_State *l_G;	/* æŒ‡å‘å…¨å±€çŠ¶æ€çš„æŒ‡é’ˆ */
-	CallInfo *ci;  /* call info for current function | å½“å‰çº¿ç¨‹è¿è¡Œçš„å‡½æ•°è°ƒç”¨ä¿¡æ¯ */
-	const Instruction *oldpc;  /* last pc traced | å‡½æ•°è°ƒç”¨å‰ï¼Œè®°å½•ä¸Šä¸€ä¸ªå‡½æ•°çš„pcä½ç½® */
-	StkId stack_last;  /* last free slot in the stack | æ ˆçš„å®é™…æœ€åä¸€ä¸ªä½ç½®ï¼ˆæ ˆçš„é•¿åº¦æ˜¯åŠ¨æ€å¢åŠ çš„ï¼‰ */
-	StkId stack;  /* stack base | æ ˆåº• */
+	lu_byte status;	/* Ïß³Ì½Å±¾µÄ×´Ì¬, ¿ÉÑ¡×´Ì¬ #include <lua.h> */
+	StkId top;  /* first free slot in the stack | Ö¸Ïòµ±Ç°Ïß³ÌÕ»µÄÕ»¶¥Ö¸Õë */
+	global_State *l_G;	/* Ö¸ÏòÈ«¾Ö×´Ì¬µÄÖ¸Õë */
+	CallInfo *ci;  /* call info for current function | µ±Ç°Ïß³ÌÔËĞĞµÄº¯Êıµ÷ÓÃĞÅÏ¢ */
+	const Instruction *oldpc;  /* last pc traced | º¯Êıµ÷ÓÃÇ°£¬¼ÇÂ¼ÉÏÒ»¸öº¯ÊıµÄpcÎ»ÖÃ */
+	StkId stack_last;  /* last free slot in the stack | Õ»µÄÊµ¼Ê×îºóÒ»¸öÎ»ÖÃ£¨Õ»µÄ³¤¶ÈÊÇ¶¯Ì¬Ôö¼ÓµÄ£© */
+	StkId stack;  /* stack base | Õ»µ× */
 	UpVal *openupval;  /* list of open upvalues in this stack */
-	GCObject *gclist;	/* ç”¨äºGC */
+	GCObject *gclist;	/* ÓÃÓÚGC */
 	struct lua_State *twups;  /* list of threads with open upvalues */
-	struct lua_longjmp *errorJmp;  /* current error recover point | å‘ç”Ÿé”™è¯¯çš„é•¿è·³è½¬ä½ç½®ï¼Œç”¨äºè®°å½•å½“å‡½æ•°å‘ç”Ÿé”™è¯¯æ—¶è·³è½¬å‡ºå»çš„ä½ç½®ã€‚*/
-	CallInfo base_ci;  /* CallInfo for first level (C calling Lua) | æŒ‡å‘å‡½æ•°è°ƒç”¨æ ˆçš„æ ˆåº• */
-	volatile lua_Hook hook;	/* æŒ‚é’©/é’©å­ */
+	struct lua_longjmp *errorJmp;  /* current error recover point | ·¢Éú´íÎóµÄ³¤Ìø×ªÎ»ÖÃ£¬ÓÃÓÚ¼ÇÂ¼µ±º¯Êı·¢Éú´íÎóÊ±Ìø×ª³öÈ¥µÄÎ»ÖÃ¡£*/
+	CallInfo base_ci;  /* CallInfo for first level (C calling Lua) | Ö¸Ïòº¯Êıµ÷ÓÃÕ»µÄÕ»µ× */
+	volatile lua_Hook hook;	/* ¹Ò¹³/¹³×Ó */
 	ptrdiff_t errfunc;  /* current error handling function (stack index) */
-	int stacksize;	/* æ ˆçš„å¤§å° */
-	int basehookcount;	/* ç”¨æˆ·è®¾ç½®çš„æ‰§è¡Œæ—¶æŒ‡ä»¤æ•°ï¼ˆLUA_MASKCOUNTï¼‰ä¸‹æœ‰æ•ˆ*/
-	int hookcount;	/* è¿è¡Œæ—¶ï¼Œè·‘äº†å¤šå°‘æ¡æŒ‡ä»¤ï¼ˆLUA_MASKCOUNTï¼‰ä¸‹æœ‰æ•ˆ */
+	int stacksize;	/* Õ»µÄ´óĞ¡ */
+	int basehookcount;	/* ÓÃ»§ÉèÖÃµÄÖ´ĞĞÊ±Ö¸ÁîÊı£¨LUA_MASKCOUNT£©ÏÂÓĞĞ§*/
+	int hookcount;	/* ÔËĞĞÊ±£¬ÅÜÁË¶àÉÙÌõÖ¸Áî£¨LUA_MASKCOUNT£©ÏÂÓĞĞ§ */
 	unsigned short nny;  /* number of non-yieldable calls in stack */
-	unsigned short nCcalls;  /* number of nested C calls | å½“å‰Cå‡½æ•°çš„æ¡ç”¨æ·±åº¦ */
-	l_signalT hookmask;	/* æ”¯æŒçš„hookèƒ½åŠ›å®šä¹‰ #include <lua.h> */
-	lu_byte allowhook;	/* æ˜¯å¦å…è®¸hook*/
+	unsigned short nCcalls;  /* number of nested C calls | µ±Ç°Cº¯ÊıµÄÌõÓÃÉî¶È */
+	l_signalT hookmask;	/* Ö§³ÖµÄhookÄÜÁ¦¶¨Òå #include <lua.h> */
+	lu_byte allowhook;	/* ÊÇ·ñÔÊĞíhook*/
 };
 
 

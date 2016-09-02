@@ -192,7 +192,7 @@ typedef unsigned long Instruction;
 /*
 ** Size of cache for strings in the API. 'N' is the number of
 ** sets (better be a prime) and "M" is the size of each set (M == 1
-** makes a direct cache (ç›´æŽ¥é«˜é€Ÿç¼“å­˜).)
+** makes a direct cache (Ö±½Ó¸ßËÙ»º´æ).)
 */
 #if !defined(STRCACHE_N)
 #define STRCACHE_N		53

@@ -105,6 +105,12 @@
     <ClInclude Include="lua-5.3.3\src\lzio.h">
       <Filter>源文件\srcLua</Filter>
     </ClInclude>
+    <ClInclude Include="StudyLua.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="main.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -217,6 +223,9 @@
     </ClCompile>
     <ClCompile Include="lua-5.3.3\src\lzio.c">
       <Filter>源文件\srcLua</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
