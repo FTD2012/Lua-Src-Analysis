@@ -19,6 +19,18 @@
 */
 #include <crtdefs.h>
 
+/*
+**	引入对象 NULL
+**	#define NULl 0
+*/
+#include <stddef.h>
+
+/*
+**	引入对象 free
+**	引入对象 realloc
+*/
+#include <malloc.h>
+
 #define LUA_INTEGER long long
 #define LUA_NUMBER double
 #define LUA_KCONTEXT ptrdiff_t
@@ -37,18 +49,50 @@
 #define LUA_TTHREAD	8
 #define LUA_NUMTAGS	9
 
+#define LUA_API extern
 typedef LUA_INTEGER lua_Integer;
 typedef LUA_NUMBER lua_Number;
 typedef LUA_KCONTEXT lua_KContext;
+#define _JBLEN	16
+#define _JBTYPE int
+typedef _JBTYPE jmp_buf[_JBLEN];
+#define luai_jmpbuf jmp_buf
+#define LUA_EXTRASPACE (sizeof(void *))
+#define LUA_IDSIZE	60
+
+/*
+**	位操作
+*/
+#define bitmask(b)	(1<<(b))
+#define bit2mask(b1, b2)	(bitmask(b1) | bitmask(b2))
+
+/*
+**	GC使用的状态位
+*/
+#define WHITE0BIT	0	/* object is white (type 0) */
+#define WHITE1BIT	1	/* object is white (type 1) */
+
+#define WHITEBITS bit2mask(WHITE0BIT, WHITE1BIT)
+
+#define luaC_white(g) cast(lu_byte, (g)->currentwhite & WHITEBITS) /* char */
+
+/*
+**	cast
+*/
+#define cast(t, exp) ((t)(exp))
 
 typedef struct GCObject GCObject;
 typedef struct UpVal Upval;
+typedef struct lua_Debug lua_Debug;
 typedef unsigned char lu_byte;
-typedef lua_State lua_State;
+typedef struct lua_State lua_State;
 typedef unsigned int Instruction;
 typedef int(*lua_CFunction) (lua_State *L);
 typedef (*lua_KFunction) (lua_State *L, int status, lua_KContext ctx);
 typedef void * (*lua_Alloc) (void *ud, void *ptr,size_t osize, size_t nsize);
+typedef void(*lua_Hook) (lua_State *L, lua_Debug *ar);
+typedef int sig_atomic_t;
+#define l_signalT sig_atomic_t
 typedef ptrdiff_t l_mem;
 typedef size_t lu_mem;
 typedef enum {
@@ -171,6 +215,49 @@ struct UpVal {
 };
 
 /*
+**	长跳转缓冲区链表
+**	volatile 易变的
+**	适用于多线程访问
+*/
+struct lua_longjmp {
+	struct lua_longjmp *previous;
+	luai_jmpbuf b;
+	volatile int status;
+};
+
+/*
+**	lua debug
+*/
+struct lua_Debug {
+	int event;
+	const char *name;
+	const char *namewhat;
+	const char *what;
+	const char *source;
+	int currentline;
+	int linedefined;
+	int lastlinedefined;
+	unsigned char nups;
+	unsigned char nparams;
+	char isvararg;
+	char istailcall;
+	char short_src[LUA_IDSIZE];
+	struct CallInfo *i_ci;
+};
+
+/*
+**	thread state + extra space
+*/
+typedef struct LX {
+	lu_byte extra_[LUA_EXTRASPACE];
+	lua_State l;
+} LX;
+typedef struct LG {
+	LX l;
+	global_State g;
+} LG;
+
+/*
 **	global_State
 */
 typedef struct global_State {
@@ -222,7 +309,34 @@ struct lua_State {
 	UpVal *openupval;
 	GCObject *gclist;
 	struct lua_State *wtups;
-
+	struct lua_longjump *errorJmp;
+	CallInfo base_ci;
+	volatile lua_Hook hook;
+	ptrdiff_t errfunc;
+	int stacksize;
+	int basehookcount;
+	int hookcount;
+	unsigned short nny;
+	unsigned short nCcalls;
+	l_signalT hookmask;
+	lu_byte allowhook;
 };
+
+/*
+**	根据nsize申请内存，存储在ptr中
+*/
+static void *l_alloc(void *ud, void *ptr, size_t oszie, size_t nsize);
+
+
+//~~ LUALIB_API begin
+
+
+
+//~~ LUALIB_API end
+
+//~~ LUA_API begin
+LUA_API lua_State *(lua_newstate)(lua_Alloc f, void *ud);
+
+//~~ LUA_API end
 
 #endif

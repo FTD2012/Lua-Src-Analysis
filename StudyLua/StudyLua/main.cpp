@@ -8,12 +8,12 @@ using namespace std;
 
 
 extern "C" {
-#include "./lua-5.3.3/src/lua.h"
-#include "./lua-5.3.3/src/lauxlib.h"
-#include "./lua-5.3.3/src/lualib.h"
-#include "./lua-5.3.3/src/lobject.h"
+//#include "./lua-5.3.3/src/lua.h"
+//#include "./lua-5.3.3/src/lauxlib.h"
+//#include "./lua-5.3.3/src/lualib.h"
+//#include "./lua-5.3.3/src/lobject.h"
 }
-
+#include "StudyLua.h"
 
 void Binarycout(int n)
 {
@@ -52,20 +52,20 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	system("pause");
 
-	lua_State *L = luaL_newstate();
+	//lua_State *L = luaL_newstate();
 
-	lua_pushstring(L, "1213");
-	lua_pushnumber(L, 20);
+	//lua_pushstring(L, "1213");
+	//lua_pushnumber(L, 20);
 
-	if (lua_isstring(L, 1)) {
-		cout << lua_isstring(L, 1) << endl;
-	}
+	//if (lua_isstring(L, 1)) {
+	//	cout << lua_isstring(L, 1) << endl;
+	//}
 
-	if (lua_isnumber(L, 2)) {
-		cout << lua_isnumber(L, 2) << endl;
-	}
+	//if (lua_isnumber(L, 2)) {
+	//	cout << lua_isnumber(L, 2) << endl;
+	//}
 
-	lua_close(L);
+	//lua_close(L);
 	return 0;
 }
 
