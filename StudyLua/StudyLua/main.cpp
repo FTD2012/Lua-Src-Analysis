@@ -43,12 +43,14 @@ int _tmain(int argc, _TCHAR* argv[])
 	Binarycout(5);
 	myBinarycout(5);
 
-	char a[10] = { "1213" }, b[10];
+	char a[10] = { "1213" };
 	int arr[] = { 1, 3, 8, 90, 100, 455 };
 	std::string str = "123.4";
 	cout << "This is master branch" << endl;
 	char *ch = new char[100];
 	//lua_strx2number(str.c_str(), &ch);
+	lua_State *L = new lua_State;
+	makeseed(L);
 
 	system("pause");
 

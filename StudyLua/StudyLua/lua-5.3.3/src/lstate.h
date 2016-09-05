@@ -183,7 +183,7 @@ struct lua_State {
 	int basehookcount;	/* 用户设置的执行时指令数（LUA_MASKCOUNT）下有效*/
 	int hookcount;	/* 运行时，跑了多少条指令（LUA_MASKCOUNT）下有效 */
 	unsigned short nny;  /* number of non-yieldable calls in stack */
-	unsigned short nCcalls;  /* number of nested C calls | 当前C函数的条用深度 */
+	unsigned short nCcalls;  /* number of nested C calls | 当前C函数的调用深度 */
 	l_signalT hookmask;	/* 支持的hook能力定义 #include <lua.h> */
 	lu_byte allowhook;	/* 是否允许hook*/
 };

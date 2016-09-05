@@ -73,6 +73,7 @@ typedef struct LG {
 /*
 ** Compute an initial seed as random as possible. Rely on Address Space
 ** Layout Randomization (if present) to increase randomness..
+**	地址空间布局随机化
 */
 #define addbuff(b,p,e) \
   { size_t t = cast(size_t, e); \

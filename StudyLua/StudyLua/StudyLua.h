@@ -31,6 +31,17 @@
 */
 #include <malloc.h>
 
+/*
+**	引入对象memcpy
+*/
+#include <string.h>
+
+/* my macro define */
+#define TEST
+
+#define NS_SL_BEGIN	namespace SL {
+#define NS_SL_END	}
+
 #define LUA_INTEGER long long
 #define LUA_NUMBER double
 #define LUA_KCONTEXT ptrdiff_t
@@ -44,12 +55,26 @@
 #define LUA_TNUMBER	3
 #define LUA_TSTRING 4
 #define LUA_TTABLE	5
-#define LUA_TUSERDATA	6
-#define LUA_TUSERDATA 7
+#define LUA_TFUNCTION	6
+#define LUA_TUSERDATA	7
 #define LUA_TTHREAD	8
 #define LUA_NUMTAGS	9
 
+/*
+**	thread status
+*/
+#define LUA_OK	0
+#define LUA_YIELD	1
+#define LUA_ERRRUN	2
+#define LUA_ERRSYNTAX	3
+#define LUA_ERRMEM	4
+#define	LUA_ERRGCMM	5
+#define LUA_ERRERR	6
+
 #define LUA_API extern
+#define LUAI_FUNC extern
+#define LUAI_DDEC LUAI_FUNC
+#define LUAI_DDEF /* empty */
 typedef LUA_INTEGER lua_Integer;
 typedef LUA_NUMBER lua_Number;
 typedef LUA_KCONTEXT lua_KContext;
@@ -59,7 +84,7 @@ typedef _JBTYPE jmp_buf[_JBLEN];
 #define luai_jmpbuf jmp_buf
 #define LUA_EXTRASPACE (sizeof(void *))
 #define LUA_IDSIZE	60
-
+#define NILCONSTANT {NULL}, LUA_TNIL
 /*
 **	位操作
 */
@@ -76,6 +101,8 @@ typedef _JBTYPE jmp_buf[_JBLEN];
 
 #define luaC_white(g) cast(lu_byte, (g)->currentwhite & WHITEBITS) /* char */
 
+#define resethookcount(L)	(L->hookcount = L->basehookcount)
+
 /*
 **	cast
 */
@@ -86,9 +113,10 @@ typedef struct UpVal Upval;
 typedef struct lua_Debug lua_Debug;
 typedef unsigned char lu_byte;
 typedef struct lua_State lua_State;
+typedef struct global_state global_state;
 typedef unsigned int Instruction;
-typedef int(*lua_CFunction) (lua_State *L);
-typedef (*lua_KFunction) (lua_State *L, int status, lua_KContext ctx);
+typedef int (*lua_CFunction) (lua_State *L);
+typedef int (*lua_KFunction) (lua_State *L, int status, lua_KContext ctx);
 typedef void * (*lua_Alloc) (void *ud, void *ptr,size_t osize, size_t nsize);
 typedef void(*lua_Hook) (lua_State *L, lua_Debug *ar);
 typedef int sig_atomic_t;
@@ -100,7 +128,6 @@ typedef enum {
 	TM_MUL, TM_MOD, TM_POW, TM_DIV, TM_IDIV, TM_BAND, TM_BOR, TM_BXOR,
 	TM_SHL, TM_SHR, TM_UNM, TM_BNOT, TM_LT, TM_LE, TM_CONCAT, TM_CALL, TM_N
 } TMS;
-
 
 #define CommonHeader GCObject *next;lu_byte tt;lu_byte marked
 
@@ -120,6 +147,13 @@ typedef struct lua_TValue {
 	TValuefields;
 } TValue;
 typedef TValue *StkId;
+
+/* internal assertions for in-house debugging */
+#define lua_assert(c) ((void)0)
+
+/* (address of) a fixed nil value */
+#define luaO_nilobject (&luaO_nilobject_)
+LUAI_DDEC const TValue luaO_nilobject_;
 
 /*
 ** TString
@@ -156,7 +190,7 @@ typedef union TKey {
 typedef struct Node {
 	TValue i_val;
 	Tkey i_key;
-};
+} Node;
 typedef struct Table {
 	CommonHeader;
 	lu_byte flags;
@@ -245,17 +279,7 @@ struct lua_Debug {
 	struct CallInfo *i_ci;
 };
 
-/*
-**	thread state + extra space
-*/
-typedef struct LX {
-	lu_byte extra_[LUA_EXTRASPACE];
-	lua_State l;
-} LX;
-typedef struct LG {
-	LX l;
-	global_State g;
-} LG;
+
 
 /*
 **	global_State
@@ -294,8 +318,11 @@ typedef struct global_State {
 	TString *memerrmsg;
 	TString *tmname[TM_N];
 	struct Table *mt[LUA_NUMTAGS];
-	TString *[STRCACHE_N][STRCACHE_M];
+	TString *strcache[STRCACHE_N][STRCACHE_M];
 } global_State;
+
+#define	G(L)	(L->l_G)
+
 
 struct lua_State {
 	CommonHeader;
@@ -306,9 +333,10 @@ struct lua_State {
 	CallInfo *ci;
 	const Instruction *oldpc;
 	StkId stack_last;
+	StkId stack;
 	UpVal *openupval;
 	GCObject *gclist;
-	struct lua_State *wtups;
+	struct lua_State *twups;
 	struct lua_longjump *errorJmp;
 	CallInfo base_ci;
 	volatile lua_Hook hook;
@@ -322,11 +350,43 @@ struct lua_State {
 	lu_byte allowhook;
 };
 
+
+//~~ random number begin
+/* random seed */
+#if !defined(luai_makeseed)
+#include <time.h>
+#define luai_makeseed() cast(unsigned int, time(NULL))
+#endif
+#define addbuf(b, p, e) \
+{ size_t t = cast(size_t, e); \
+	memcpy(b + p, &t, sizeof(t)); \
+	printf("t address value is %x\n", &t);	\
+	p += sizeof(t); }
+
+unsigned int makeseed(lua_State *L);
+//~~ random number end
+
+/*
+**	thread state + extra space
+*/
+typedef struct LX {
+	lu_byte extra_[LUA_EXTRASPACE];
+	lua_State l;
+} LX;
+typedef struct LG {
+	LX l;
+	global_State g;
+} LG;
+
 /*
 **	根据nsize申请内存，存储在ptr中
 */
 static void *l_alloc(void *ud, void *ptr, size_t oszie, size_t nsize);
 
+/*
+**	使用常量，但不申请内存（避免错误）的预初始化一个线程
+*/
+static void *preinit_thread(lua_State *L, global_State *g);
 
 //~~ LUALIB_API begin
 
