@@ -46,7 +46,12 @@ int luaS_eqlngstr(TString *a, TString *b) {
 		(memcmp(getstr(a), getstr(b), len) == 0));  /* equal contents */
 }
 
-
+/*
+**	JSHash 算法
+**	http://blog.csdn.net/maximuszhou/article/details/44786515
+**	各个Hash算法性能的比较
+**	https://www.byvoid.com/blog/string-hash-compare
+*/
 LUAI_FUNC unsigned int luaS_hash(const char *str, size_t l, unsigned int seed) {
 	unsigned int h = seed ^ cast(unsigned int, l);
 	size_t step = (l >> LUAI_HASHLIMIT) + 1;

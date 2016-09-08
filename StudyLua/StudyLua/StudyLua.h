@@ -1,3 +1,7 @@
+#include <iostream>
+using std::cout;
+using std::endl;
+
 /*
 **	模拟实现lua源代码
 **	@author ljm
@@ -104,9 +108,18 @@ typedef _JBTYPE jmp_buf[_JBLEN];
 #define resethookcount(L)	(L->hookcount = L->basehookcount)
 
 /*
+**	Lua will use at most ~(2^LUAI_HASHLIMIT) bytes from a string to compute its has
+*/
+#if !defined(LUAI_HASHLIMIT)
+#define LUAI_HASHLIMIT	5
+#endif
+
+
+/*
 **	cast
 */
 #define cast(t, exp) ((t)(exp))
+#define cast_byte(i) cast(lu_byte, (i))
 
 typedef struct GCObject GCObject;
 typedef struct UpVal Upval;
@@ -361,6 +374,7 @@ struct lua_State {
 { size_t t = cast(size_t, e); \
 	memcpy(b + p, &t, sizeof(t)); \
 	printf("t address value is %x\n", &t);	\
+	printf("t value is %d\n", t);	\
 	p += sizeof(t); }
 
 unsigned int makeseed(lua_State *L);
@@ -387,6 +401,11 @@ static void *l_alloc(void *ud, void *ptr, size_t oszie, size_t nsize);
 **	使用常量，但不申请内存（避免错误）的预初始化一个线程
 */
 static void *preinit_thread(lua_State *L, global_State *g);
+
+/*
+**	lua hash
+*/
+LUAI_FUNC unsigned int luaS_hash(const char *str, size_t l, unsigned int seed);
 
 //~~ LUALIB_API begin
 
