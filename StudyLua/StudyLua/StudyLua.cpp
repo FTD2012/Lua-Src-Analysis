@@ -24,7 +24,7 @@ static void *l_alloc(void *ud, void *ptr, size_t osize, size_t nsize) {
 		return realloc(ptr, nsize);
 }
 
-static void *preinit_thread(lua_State *L, global_State *g) {
+static void preinit_thread(lua_State *L, global_State *g) {
 	G(L) = g;
 	L->stack = NULL;
 	L->ci = NULL;
@@ -43,10 +43,12 @@ static void *preinit_thread(lua_State *L, global_State *g) {
 	L->errfunc = 0;
 }
 
+static int panic(lua_State *L) {
+
+}
+
 LUAI_FUNC unsigned int luaS_hash(const char *str, size_t l, unsigned int seed) {
-	str = new char[100];
-	str = "0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz";
-	l = 256;
+#undef TEST
 	unsigned int h = seed ^ cast(unsigned int, l);
 #if defined(TEST)
 	cout << "seed = " << seed << endl;
@@ -68,6 +70,11 @@ LUAI_FUNC unsigned int luaS_hash(const char *str, size_t l, unsigned int seed) {
 		h ^= ((h << 5) + (h >> 2) + cast_byte(str[l - 1]));
 	}
 	return h;
+}
+
+LUALIB_API lua_State *luaL_newstate(void) {
+	lua_State *L = lua_newstate(l_alloc, NULL);
+	return 0;
 }
 
 unsigned int makeseed(lua_State *L) {
@@ -136,8 +143,40 @@ LUA_API lua_State *lua_newstate(lua_Alloc f, void * ud) {
 	g->currentwhite = bitmask(WHITE0BIT); /* 1 << 0 */
 	L->marked = luaC_white(g);
 	printf("L->marked is %c \n", L->marked);
+	preinit_thread(L, g);
 	g->frealloc = f;
 	g->ud = ud;
 	g->mainthread = L;
-	return 0;
+	g->seed = makeseed(L);
+	g->gcrunning = 0;
+	g->GCestimate = 0;
+	g->strt.size = g->strt.nuse = 0;
+	g->strt.hash = NULL;
+	setnilvalue(&g->l_registry);
+	g->panic = NULL;
+	g->version = NULL;
+	g->gcstate = GCSpause;
+	g->gckind = KGC_NORMAL;
+	g->allgc = g->finobj = g->tobefnz = g->fixdegc = NULL;
+	g->sweepgc = NULL;
+	g->gray = g->grayagain = NULL;
+	g->weak = g->ephemeron = g->allweak = NULL;
+	g->twups = NULL;
+	g->totalbytes = sizeof(LG);
+	g->GCdebt = 0;
+	g->gcfinnum = 0;
+	g->gcpause = LUAI_GCPAUSE;
+	g->gcstepmul = LUAI_GCMUL;
+	for (i = 0; i < LUA_NUMTAGS; i++) g->mt[i] = NULL;
+	//TODO(ljm) >>> lua exceptions
+	return L;
+}
+
+LUA_API lua_CFunction(lua_atpanic) (lua_State *L, lua_CFunction panicf) {
+	lua_CFunction old;
+	lua_lock(L);
+	old = G(L)->panic;
+	G(L)->panic = panicf;
+	lua_unlock(L);
+	return old;
 }

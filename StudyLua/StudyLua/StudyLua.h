@@ -75,8 +75,43 @@ using std::endl;
 #define	LUA_ERRGCMM	5
 #define LUA_ERRERR	6
 
+/*
+**	possible states of the Garbage Collector
+*/
+#define GCSprogagate	0
+#define GCSatmic	1
+#define GCswpallgc	2
+#define GCSswpfinobj	3
+#define GCSswptobefnz	4
+#define GCSswpend	5
+#define GCScallfin	6
+#define GCSpause	7
+/*
+**	kinds of Garbage Collection
+*/
+#define KGC_NORMAL	0
+#define KGC_EMERGENCY	1	/* gc was forced by an allocation failure */
+
+#if !defined(LUAI_GCPAUSE)
+#define LUAI_GCPAUSE	200 /* 200% */
+#endif
+
+#if !defined(LUAI_GCMUL)
+#define LUAI_GCMUL	200 /* GC runs 'twice the speed' of memory allocation */
+#endif
+
+/*
+**	macros that are executed whenever program enters the LUA core
+**	('lua_lock') and leaves the core ('lua_unclock')
+*/
+#if !defined(lua_lock)
+#define lua_lock(L)	((void)0)
+#define lua_unlock(L)	((void) 0)
+#endif
+
 #define LUA_API extern
 #define LUAI_FUNC extern
+#define LUALIB_API LUA_API
 #define LUAI_DDEC LUAI_FUNC
 #define LUAI_DDEF /* empty */
 typedef LUA_INTEGER lua_Integer;
@@ -89,6 +124,14 @@ typedef _JBTYPE jmp_buf[_JBLEN];
 #define LUA_EXTRASPACE (sizeof(void *))
 #define LUA_IDSIZE	60
 #define NILCONSTANT {NULL}, LUA_TNIL
+
+/*
+**	macros to set valuse
+*/
+#define settt_(o, t) ((o)->tt_ = (t))
+
+#define setnilvalue(obj) settt_(obj, LUA_TNIL)
+
 /*
 **	位操作
 */
@@ -113,6 +156,20 @@ typedef _JBTYPE jmp_buf[_JBLEN];
 #if !defined(LUAI_HASHLIMIT)
 #define LUAI_HASHLIMIT	5
 #endif
+
+/*
+**	{===========================================
+**	"Abstraction Layer" for basic report of messages and errors
+*/
+/* print an error message */
+#if !defined(lua_wirtestringerror)
+#define lua_writestringerror(s, p)	\
+		(fprintf(stderr, (s), (p), fflush(stderr))
+#endif
+
+/*
+**	}===========================================
+*/
 
 
 /*
@@ -163,6 +220,11 @@ typedef TValue *StkId;
 
 /* internal assertions for in-house debugging */
 #define lua_assert(c) ((void)0)
+
+/* assertion for checking API calls */
+#define luai_apicheck(l, e) lua_assert(e)
+#define api_check(l, e, msg) luai_apicheck(l, (e) && msg)
+
 
 /* (address of) a fixed nil value */
 #define luaO_nilobject (&luaO_nilobject_)
@@ -311,7 +373,7 @@ typedef struct global_State {
 	lu_byte gcstate;
 	lu_byte gckind;
 	lu_byte gcrunning;
-	GCObject *allc;
+	GCObject *allgc;
 	GCObject **sweepgc;
 	GCObject *finobj;
 	GCObject *gray;
@@ -400,7 +462,12 @@ static void *l_alloc(void *ud, void *ptr, size_t oszie, size_t nsize);
 /*
 **	使用常量，但不申请内存（避免错误）的预初始化一个线程
 */
-static void *preinit_thread(lua_State *L, global_State *g);
+static void preinit_thread(lua_State *L, global_State *g);
+
+/*
+**	lua panic
+*/
+static int panic(lua_State *L);
 
 /*
 **	lua hash
@@ -408,14 +475,14 @@ static void *preinit_thread(lua_State *L, global_State *g);
 LUAI_FUNC unsigned int luaS_hash(const char *str, size_t l, unsigned int seed);
 
 //~~ LUALIB_API begin
-
+LUALIB_API lua_State *luaL_newstate(void);
 
 
 //~~ LUALIB_API end
 
 //~~ LUA_API begin
 LUA_API lua_State *(lua_newstate)(lua_Alloc f, void *ud);
-
+LUA_API lua_CFunction(lua_atpanic) (lua_State *L, lua_CFunction panicf);
 //~~ LUA_API end
 
 #endif

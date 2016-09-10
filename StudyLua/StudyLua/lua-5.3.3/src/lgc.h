@@ -39,9 +39,9 @@
 /*
 ** Possible states of the Garbage Collector
 */
-#define GCSpropagate	0
-#define GCSatomic	1
-#define GCSswpallgc	2
+#define GCSpropagate	0	/* propagate ·±ÑÜ */
+#define GCSatomic	1	/* atomic Ô­×Ó*/
+#define GCSswpallgc	2	
 #define GCSswpfinobj	3
 #define GCSswptobefnz	4
 #define GCSswpend	5

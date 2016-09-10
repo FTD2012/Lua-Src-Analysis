@@ -91,7 +91,6 @@ typedef struct CallInfo {
 	lu_byte callstatus;
 } CallInfo;
 
-
 /*
 ** Bits in CallInfo status
 */
@@ -123,7 +122,7 @@ typedef struct global_State {
 	lua_Alloc frealloc;  /* function to reallocate memory */
 	void *ud;         /* auxiliary£¨¸¨ÖúµÄ£© data to 'frealloc' */
 	l_mem totalbytes;  /* number of bytes currently allocated - GCdebt */
-	l_mem GCdebt;  /* bytes allocated not yet compensated by the collector */
+	l_mem GCdebt;  /* bytes allocated not yet compensated(²¹³¥£¬µÖÏû) by the collector */
 	lu_mem GCmemtrav;  /* memory traversed by the GC */
 	lu_mem GCestimate;  /* an estimate of the non-garbage memory in use */
 	stringtable strt;  /* hash table for strings | TString È«¾Ö×Ö·û´®¹þÏ£±í*/

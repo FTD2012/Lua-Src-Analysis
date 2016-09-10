@@ -56,22 +56,26 @@ const char lua_ident[] =
 #define api_checkstackindex(l, i, o)  \
 	api_check(l, isstackindex(i, o), "index not in the stack")
 
+/*
+**	从栈中获取数据
+**	http://blog.csdn.net/yanglovefeng/article/details/36005239
+*/
 
 static TValue *index2addr (lua_State *L, int idx) {
   CallInfo *ci = L->ci;
-  if (idx > 0) {
+  if (idx > 0) {	/* 返回 L->ci->func 为栈基址的表元素中第idx 个对象*/
     TValue *o = ci->func + idx;
     api_check(L, idx <= ci->top - (ci->func + 1), "unacceptable index");
     if (o >= L->top) return NONVALIDVALUE;
     else return o;
   }
-  else if (!ispseudo(idx)) {  /* negative index */
+  else if (!ispseudo(idx)) {  /* negative index | 返回L->top 为栈基址的表元素中第idx个对象 */
     api_check(L, idx != 0 && -idx <= L->top - (ci->func + 1), "invalid index");
     return L->top + idx;
   }
-  else if (idx == LUA_REGISTRYINDEX)
+  else if (idx == LUA_REGISTRYINDEX)	/* 下面的都是伪索引(Pseudo-indices) 返回&G->L->l_registry中表对象，用于表示全局表 */
     return &G(L)->l_registry;
-  else {  /* upvalues */
+  else {  /* upvalues | 将idx转化为 c闭包 idxc, 并将 L->ci->func 转化为 c闭包func, 取出闭包函数func 在indx处的upvalue */
     idx = LUA_REGISTRYINDEX - idx;
     api_check(L, idx <= MAXUPVAL + 1, "upvalue index too large");
     if (ttislcf(ci->func))  /* light C function? */
