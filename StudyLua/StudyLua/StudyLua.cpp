@@ -13,6 +13,32 @@ static void binarycout(T n) {
 /* 为什么要在声明处定义为外部变量？ */
 LUAI_DDEF const TValue luaO_nilobject_ = { NILCONSTANT };
 
+static TValue *index2addr(lua_State *L, int idx) {
+	CallInfo *ci = L->ci;
+	if (idx > 0) {
+		TValue *o = ci->func + idx;
+		api_check(L, idx <= ci->top - (ci->func + 1), "unacceptable index");
+		if (o >= L->top) return NONVALIDVALUE;
+		else return o;
+	}
+	else if (!ispseudo(idx)) {
+		api_check(L, idx !＝ 0 && -idx <= L->top - (ci->func + 1), "invalid index");
+	}
+	else if (idx == LUA_REGISTRYINDEX)
+		return &G(L)->l_registry;
+	else {
+		idx = LUA_REGISTRYINDEX - idx;
+		api_check(L, idx <= MAXUPVAL + 1, "upvalue index too large");
+		if (ttislcf(ci->func))
+			return NONVALIDVALUE;
+		else {
+			CClosure *func = clCvalue(ci->func);
+			return (idx <= func->nupvalues) ? *func->nupvalues[idx - 1] : NONVALIDVALUE;
+		}
+	}
+}
+
+
 static void *l_alloc(void *ud, void *ptr, size_t osize, size_t nsize) {
 	(void)ud;
 	(void)osize;

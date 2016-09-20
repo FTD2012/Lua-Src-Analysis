@@ -64,6 +64,24 @@ using std::endl;
 #define LUA_TTHREAD	8
 #define LUA_NUMTAGS	9
 
+/* 
+**	LUA_TFUNCTION varinants:
+**	0 - Lua function
+**	1 - light C function
+**	2 - regular C function (closure)
+*/
+
+/* Varinant tags for functions */
+#define LUA_TLCL	(LUA_TFUNCTION | (0 << 4))	/* Lua closure */
+#define LUA_TLCF	(LUA_TFUNCTION | (1 << 4))	/* light C function */
+#define LUA_TCCL	(LUA_TFUNCTION | (2 << 4))	/* C closure */
+
+/* Bit mark for collectable types */
+#define BIT_ISCOLLECTABLE	(1 << 6 )
+
+/* mark a tag as collectable */
+#define ctb(t)		((t) | BIT_ISCOLLECTABLE)
+
 /*
 **	thread status
 */
@@ -100,6 +118,13 @@ using std::endl;
 #define LUAI_GCMUL	200 /* GC runs 'twice the speed' of memory allocation */
 #endif
 
+
+/* value */
+#define val_(o)		((o)->value_)
+
+/* raw type tag for a TValue */
+#define rttype(o)	((o)->tt_)
+
 /*
 **	macros that are executed whenever program enters the LUA core
 **	('lua_lock') and leaves the core ('lua_unclock')
@@ -108,6 +133,26 @@ using std::endl;
 #define lua_lock(L)	((void)0)
 #define lua_unlock(L)	((void) 0)
 #endif
+
+/*
+**	LUAI_BITSINT defines the (miniunm) number of bits in an 'int'
+*/
+/* avoid undefined shifts */
+#if ((INT_MAX >> 15) >> 15) >= 1
+#define LUAI_BITSINT	32
+#else
+/* 'int' always must have at least 16 bits */
+#define  LUAI_BITSINT	16
+#endif
+
+/* LUAI_MAXSTACK limits the size of the Lua stack. */
+#if LUAI_BITSINT >= 32
+#define LUAI_MAXSTACK	1000000
+#else
+#define LUAI_MAXSTACK	15000
+#endif
+
+
 
 #define LUA_API extern
 #define LUAI_FUNC extern
@@ -184,6 +229,7 @@ typedef struct lua_Debug lua_Debug;
 typedef unsigned char lu_byte;
 typedef struct lua_State lua_State;
 typedef struct global_state global_state;
+//typedef struct LClosure LClosure;
 typedef unsigned int Instruction;
 typedef int (*lua_CFunction) (lua_State *L);
 typedef int (*lua_KFunction) (lua_State *L, int status, lua_KContext ctx);
@@ -199,10 +245,20 @@ typedef enum {
 	TM_SHL, TM_SHR, TM_UNM, TM_BNOT, TM_LT, TM_LE, TM_CONCAT, TM_CALL, TM_N
 } TMS;
 
+/* type to ensure maximum alignment */
+typedef union {
+	lua_Number n;
+	double u;
+	void *s;
+	lua_Integer i;
+	long l;
+} L_Umaxalign;
+
+
 #define CommonHeader GCObject *next;lu_byte tt;lu_byte marked
 
 /*
-**	lua的基本书类型
+**	lua的基本数据类型
 */
 typedef union Value{
 	GCObject *gc;
@@ -219,7 +275,9 @@ typedef struct lua_TValue {
 typedef TValue *StkId;
 
 /* internal assertions for in-house debugging */
-#define lua_assert(c) ((void)0)
+#define lua_assert(c)		((void)0)
+#define check_exp(c, e)		(e)
+
 
 /* assertion for checking API calls */
 #define luai_apicheck(l, e) lua_assert(e)
@@ -231,11 +289,27 @@ typedef TValue *StkId;
 LUAI_DDEC const TValue luaO_nilobject_;
 
 /*
-** TString
+**	Pseudo-indices
+**	(-LUAI_MAXSTACK is the minium valid index; we keep some free empty
+**	space after that to help overflowdetection
 */
-//string cache
+#define LUA_REGISTRYINDEX	(-LUAI_MAXSTACK - 1000)
+
+/* value at a non-valid index */
+#define NONVALIDVALUE	cast(TValue *, luaO_nilobject)
+
+/* test for pseudo index */
+#define ispseudo(i) ((i) <= LUA_REGISTRYINDEX)
+
+
+/* string cache */
 #define STRCACHE_N 53
 #define STRCACHE_M 2
+
+/*
+** Header for string value; string bytes follow the end of this structure
+** (aligned according to 'UTString'; see next).
+*/
 typedef struct TString {
 	CommonHeader;
 	lu_byte extra;
@@ -246,11 +320,39 @@ typedef struct TString {
 		struct TString *hnext;
 	} u;
 } TString;
+
+/*
+** Ensures that address after this type is always fully aligned
+*/
+typedef union UTString{
+	L_Umaxalign dummy; /* ensures maximum alignment for strings */
+	TString tsv;
+} UTString;
+
+
 typedef struct stringtable {
 	TString **hash;
 	int nuse;
 	int size;
 } stringtable;
+
+/* 
+**	Headers for userdata; memory area follows the end of structure
+**	(aligned according to 'UUdata'; see next).
+*/
+typedef struct Udata {
+	CommonHeader;
+	lu_byte ttuv_;	/* user value's tag */
+	struct Table *metatable;
+	size_t len;	/* number of bytes */
+	union Value user_;
+} Udata;
+
+/* Ensures that address after this type is always fully alignment. */
+typedef union UUdata {
+	L_Umaxalign dummy;	/* ensures maximum alignment for 'local' udata */
+	Udata uv;
+} UUdata;
 
 /*
 **	Table
@@ -354,6 +456,65 @@ struct lua_Debug {
 	struct CallInfo *i_ci;
 };
 
+/*
+**	Description of a local variable for function prototypes
+**	(used for debug information)
+*/
+typedef struct LocVar {
+	TString *varname;
+	int startpc; /* first point where variable is active */
+	int endpc; /* first point where variable is dead */
+} LocVar;
+
+/*
+**	Function Prototypes
+*/
+typedef struct Proto {
+	CommonHeader;
+	lu_byte numparams; /* number of fixed parameters */
+	lu_byte is_vararg; /* 2: declared vararg; 1: uses vararg */
+	lu_byte maxstacksize; /* number of registers needed by this function 
+*/
+	int sizeupvalues; /* size of 'upvalues' */
+	int sizek; /* size of 'k' */
+	int sizecode;
+	int sizelineinfo;
+	int sizep; /* size of 'p' */
+	int sizelocvars;
+	int linedefined; /* debug information */
+	int lastlinedefine; /* debug information */
+	TValue *k; /* constants used by the function */
+	Instruction *code; /* opcodes */
+	struct Proto **p; /* functions defined inside the function */
+	int *lineinfo; /* map from opcodes to source lines (debug information) */
+	LocVar *locvars; /* information about local variables (debug information) */
+	struct LClosure *cache; /* last-created closure with this prototype */
+	TString *source; /* used for debug information */
+	GCObject *gclist;
+} Proto;
+
+/*
+**	Closures
+*/
+#define ClosureHeader	\
+	CommonHeader; lu_byte nupvalues; GCObject *gclist
+
+typedef struct CClosure {
+	ClosureHeader;
+	lua_CFunction f;
+	UpVal *upvals[1];	/* list of upvalues */
+} CClosure;
+
+typedef struct LClosure {
+	ClosureHeader;
+	struct Proto *p;
+	UpVal *upvals[1]; /* list of upvalues */
+} LClosure;
+
+typedef union Closure {
+	CClosure c;
+	LClosure l;
+} Closure;
 
 
 /*
@@ -398,6 +559,23 @@ typedef struct global_State {
 
 #define	G(L)	(L->l_G)
 
+/*
+**	Union of all collectable objects (only for conversions)
+*/
+union GCUnion {
+	GCObject gc; /* common header */
+	struct TString ts;
+	struct Udata u;
+	union Closure cl;
+	struct Table h;
+	struct Proto p;
+	struct lua_State th; /* thread */
+};
+
+#define cast_u(o)	cast(union GCUnion *, (o))
+
+/* macros to convert a GCObject into a specific value */
+#define gco2ccl(o)	check_exp((o)->tt == LUA_TCCL, &((cast_u(o))->cl.c))
 
 struct lua_State {
 	CommonHeader;
@@ -424,6 +602,16 @@ struct lua_State {
 	l_signalT hookmask;
 	lu_byte allowhook;
 };
+
+
+/* Macros to test type */
+#define checktag(o, t)	(rttype(o) == (t))
+#define ttisclosure		((rttype(o) & 0x1F) == LUA_TFUNCTION)
+#define ttisCclosure(o)	checktag((o), ctb(LUA_TCCL))
+#define ttislcf(o)	checktag((o), LUA_TLCF)
+
+/* Macros to access value */
+#define clCvalue(o)	check_exp(ttisCclosure(o), gco2ccl(val_(o).gc))
 
 
 //~~ random number begin
@@ -453,6 +641,11 @@ typedef struct LG {
 	LX l;
 	global_State g;
 } LG;
+
+/*
+**	从栈中获取数据
+*/
+static TValue *index2addr(lua_State *L, int idx);
 
 /*
 **	根据nsize申请内存，存储在ptr中

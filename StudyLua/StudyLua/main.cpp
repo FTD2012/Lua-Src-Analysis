@@ -7,16 +7,75 @@
 using namespace std;
 
 
-extern "C" {
-#include "./lua-5.3.3/src/lua.h"
-#include "./lua-5.3.3/src/lauxlib.h"
-#include "./lua-5.3.3/src/lualib.h"
-#include "./lua-5.3.3/src/lobject.h"
-}
-//#include "StudyLua.h"
+//extern "C" {
+//#include "./lua-5.3.3/src/lua.h"
+//#include "./lua-5.3.3/src/lauxlib.h"
+//#include "./lua-5.3.3/src/lualib.h"
+//#include "./lua-5.3.3/src/lobject.h"
+//}
+////#include "StudyLua.h"
+//
+//void Binarycout(int n)
+//{ 
+//	int a = 1;
+//	cout << a << endl;
+//	for (int i = 31; i >= 0; i--)
+//	{
+//		cout << ((n >> i) & 1);
+//	}
+//
+//	cout << endl;
+//}
+//
+//void myBinarycout(int n) {
+//	cout << "This is my Binary!" << endl;
+//	for (int i = 31; i >= 0; i--) {
+//		cout << (n >> i);
+//	}
+//	cout << endl;
+//}
+//
+//int myceil_16(int x) {
+//	return (x + 0xf) >> 4; /* x = ceil( x / 16 ) */
+//}
+//int _tmain(int argc, _TCHAR* argv[])
+//{
+//
+//	//Binarycout(5);
+//	//myBinarycout(5);
+//
+//	//char a[10] = { "1213" };
+//	//int arr[] = { 1, 3, 8, 90, 100, 455 };
+//	//std::string str = "123.4";
+//	//cout << "This is master branch" << endl;
+//	//char *ch = new char[100];
+//	////lua_strx2number(str.c_str(), &ch);
+//	//lua_State *L = new lua_State;
+//	//makeseed(L);
+//
+//	//system("pause");
+//
+//	lua_State *L = luaL_newstate();
+//
+//	lua_pushstring(L, "1213");
+//	lua_pushnumber(L, 20);
+//
+//	if (lua_isstring(L, 1)) {
+//		cout << lua_isstring(L, 1) << endl;
+//	}
+//
+//	if (lua_isnumber(L, 2)) {
+//		cout << lua_isnumber(L, 2) << endl;
+//	}
+//
+//	lua_close(L);
+//	return 0;
+//}
+
+#include "StudyLua.h"
 
 void Binarycout(int n)
-{ 
+{
 	int a = 1;
 	cout << a << endl;
 	for (int i = 31; i >= 0; i--)
@@ -39,35 +98,32 @@ int myceil_16(int x) {
 	return (x + 0xf) >> 4; /* x = ceil( x / 16 ) */
 }
 int _tmain(int argc, _TCHAR* argv[])
-{
-	//Binarycout(5);
-	//myBinarycout(5);
+{	
+	Proto p;
 
-	//char a[10] = { "1213" };
-	//int arr[] = { 1, 3, 8, 90, 100, 455 };
-	//std::string str = "123.4";
-	//cout << "This is master branch" << endl;
-	//char *ch = new char[100];
-	////lua_strx2number(str.c_str(), &ch);
-	//lua_State *L = new lua_State;
-	//makeseed(L);
+	cout << "sizeof L_Umaxalign = " << sizeof(L_Umaxalign) << endl;
+	cout << "sizeof TString = " << sizeof(TString) << endl;
+	cout << "sizeof UString = " << sizeof(UTString) << endl;
+	cout << "sizeof Udata = " << sizeof(Udata) << endl;
+	cout << "sizeof UUdata = " << sizeof(UUdata) << endl;
 
-	//system("pause");
+	cout << check_exp(false, 0) << endl;
+	cout << check_exp(true, 1) << endl;
 
-	lua_State *L = luaL_newstate();
+	Binarycout(5);
+	myBinarycout(5);
 
-	lua_pushstring(L, "1213");
-	lua_pushnumber(L, 20);
+	char a[10] = { "1213" };
+	int arr[] = { 1, 3, 8, 90, 100, 455 };
+	std::string str = "123.4";
+	cout << "This is master branch" << endl;
+	char *ch = new char[100];
+	//lua_strx2number(str.c_str(), &ch);
+	lua_State *L = new lua_State;
+	api_check(L, 1, "This is one");
+	api_check(L, 0, "This is zeor");
+	makeseed(L);
 
-	if (lua_isstring(L, 1)) {
-		cout << lua_isstring(L, 1) << endl;
-	}
-
-	if (lua_isnumber(L, 2)) {
-		cout << lua_isnumber(L, 2) << endl;
-	}
-
-	lua_close(L);
+	system("pause");
 	return 0;
 }
-
