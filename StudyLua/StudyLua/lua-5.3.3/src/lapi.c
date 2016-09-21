@@ -373,7 +373,24 @@ LUA_API int lua_toboolean (lua_State *L, int idx) {
   return !l_isfalse(o);
 }
 
-
+/*
+**	[-0, +0, m]
+**	const char *lua_tolstring(lua_State *L, int index, size_t *len);
+**	Converts the Lua value at the given acceptable index to a C string.
+**	If len is not NULL, it also sets *len with the string length.
+**	The Lua value must be a string or a number; otherwise, the function returns NULL.
+**	If the value is a number, then lua_tolstring also changes the 
+**	actual value in the stack to a string. (This change confuses 
+**	lua_next when lua_tolstring is applied to keys during a table traversal.)
+**
+**	lua_tolstring returns a fully aligned pointer to a string inside the Lua state.
+**	This string always has a zero('\0') after its last character(as in C), 
+**	but can contain other zeros in its body.Because Lua has garbage collection, 
+**	there is no guarantee that the pointer returned by lua_tolstring 
+**	will be valid after the corresponding value is removed from the stack
+**
+**	REFERENCE:http://pgl.yoyo.org/luai/i/lua_tolstring
+*/
 LUA_API const char *lua_tolstring (lua_State *L, int idx, size_t *len) {
   StkId o = index2addr(L, idx);
   if (!ttisstring(o)) {

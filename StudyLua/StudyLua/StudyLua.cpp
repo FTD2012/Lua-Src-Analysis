@@ -33,11 +33,11 @@ static TValue *index2addr(lua_State *L, int idx) {
 			return NONVALIDVALUE;
 		else {
 			CClosure *func = clCvalue(ci->func);
-			return (idx <= func->nupvalues) ? *func->nupvalues[idx - 1] : NONVALIDVALUE;
+			return (idx <= func->nupvalues) ? &func->upvalue[idx - 1] : NONVALIDVALUE;
 		}
 	}
+	return 0;
 }
-
 
 static void *l_alloc(void *ud, void *ptr, size_t osize, size_t nsize) {
 	(void)ud;
@@ -71,6 +71,47 @@ static void preinit_thread(lua_State *L, global_State *g) {
 
 static int panic(lua_State *L) {
 
+}
+
+TString *internshrstr(lua_State *L, const char *str, size_t l) {
+	TString *ts;
+	global_State *g = G(L);
+	unsigned int h = luaS_hash(str, l, g->seed);
+	TString **list = &g->strt.hash[lmod(h, g->strt.size)];
+	lua_assert(str != NULL);	/* otherwise 'memcmp'/'memcpy' are undefined */
+	for (ts = *list; ts != NULL; ts = ts->u.hnext) {
+		if (l == ts->shrlen && (memcmp(str, getstr(ts), l * sizeof(char)) == 0)) {	/* found! */
+			if (isdead(g, ts))	/* dead (but not collected yet)? */
+				changewhite(ts);	/* resurrect it */
+			return ts;
+			
+		}
+	}
+}
+
+TString *luaS_newlstr(lua_State *L, const char *str, size_t l) {
+	if (l <= LUAI_MAXSHORTLEN) {
+
+	}
+	return 0;
+}
+
+void luaO_tostring(lua_State *L, StkId obj) {
+	char buff[MAXNUMBER2STR];
+	size_t len;
+	lua_assert(ttisnumber(obj));
+	if (ttisinteger(obj)) 
+		len = lua_integer2str(buff, sizeof(buff), ivalue(obj));
+	else {
+		len = lua_number2str(buff, sizeof(buff), fltvalue(obj));
+#if !defined(LUA_COMPAT_FLOATSTRING)
+		if (buff[strspn(buff, "-0123456789")] == '\0') {
+			buff[len++] = lua_getlocaledecpoint();
+			buff[len++] = '0';	/* adds '.0' to resule */
+		}
+#endif
+	}
+	
 }
 
 LUAI_FUNC unsigned int luaS_hash(const char *str, size_t l, unsigned int seed) {
@@ -205,4 +246,16 @@ LUA_API lua_CFunction(lua_atpanic) (lua_State *L, lua_CFunction panicf) {
 	G(L)->panic = panicf;
 	lua_unlock(L);
 	return old;
+}
+
+LUA_API const char *lua_tolstring(lua_State *L, int idx, size_t *len) {
+	StkId o = index2addr(L, idx);
+	if (!ttisstring(o)) {	/* not convertible ? */
+		if (!cvt2str(o)) {
+			if (len != NULL) *len = 0;
+			return NULL;
+		}
+
+	}
+	return 0;
 }

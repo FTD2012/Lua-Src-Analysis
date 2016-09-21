@@ -46,9 +46,64 @@ using std::endl;
 #define NS_SL_BEGIN	namespace SL {
 #define NS_SL_END	}
 
+/*
+**	Search for "@@" to find all configurable definitions.
+*/
+
+#define l_sprintf(s, sz, f, i)	((void)(sz), sprintf(s, f, i))
+
+/*
+@@	LUA_INTEGER is the integer type used by lua.
+*/
 #define LUA_INTEGER long long
+
+/*
+@@	LUA_INTEGER_FRMLEN is the length modifier for reading/writing integers.
+*/
+#define LUA_INTEGER_FRMLEN	"ll"
+
 #define LUA_NUMBER double
 #define LUA_KCONTEXT ptrdiff_t
+
+/*
+@@	l_mathop allows the addition of an 'l' or 'f' to all math operations.
+*/
+#define l_mathop(op)	(LUA_NUMBER)op	/* no variant */
+
+/*
+@@	l_floor takes the floor of a float.
+*/
+#define l_floor(x)		(l_mathop(floor)(x))
+
+/*
+@@	LUA_INTEGE＿FMT	is the format for writing integers.
+*/
+#define LUA_INTEGER_FMT	"%" LUA_INTEGER_FRMLEN "d"
+
+/*
+@@	LUA_NUMBER_FMT is the format for writing floats.
+*/
+#define LUA_NUMBER_FMT	"%.14g"
+
+/*
+@@	lua_integer2str converts an integer to a string.
+*/
+#define lua_integer2str(s, sz, n)	l_sprintf((s), sz, LUA_INTEGER_FMT, (n))
+
+/*
+@@	lua_number2str converts a float to a string.
+*/
+#define lua_number2str(s, sz, n)	l_sprintf((s), sz, LUA_NUMBER_FMT, (n))
+
+/*
+@@	lua_getlocaldecpoint gets the local "radix character" (decimal point).
+**	Change that if you do not want to use C locals. (Code using this
+**	macro must include header 'locale.h')
+*/
+#if !defined(lua_getlocaledecpoint)
+#define lua_getlocaledecpoint()		(localeconv()->decimal_point[0])
+#endif
+
 /*
 **	lua基本数据类型状态位
 */
@@ -64,17 +119,26 @@ using std::endl;
 #define LUA_TTHREAD	8
 #define LUA_NUMTAGS	9
 
+/*
+**	Extra tags for non-values	
+*/
+#define LUA_TDEADKEY	(LUA_NUMTAGS + 1)	/* removed keys int tables */
+
 /* 
-**	LUA_TFUNCTION varinants:
+**	LUA_TFUNCTION variants:
 **	0 - Lua function
 **	1 - light C function
 **	2 - regular C function (closure)
 */
 
-/* Varinant tags for functions */
+/* Variant tags for functions */
 #define LUA_TLCL	(LUA_TFUNCTION | (0 << 4))	/* Lua closure */
 #define LUA_TLCF	(LUA_TFUNCTION | (1 << 4))	/* light C function */
 #define LUA_TCCL	(LUA_TFUNCTION | (2 << 4))	/* C closure */
+
+/* Variant tags for numbers */
+#define LUA_TNUMFLT	(LUA_TNUMBER | (0 << 4))	/* float numbers */
+#define LUA_TNUMINT	(LUA_TNUMBER | (1 << 4))	/* integer numbers */
 
 /* Bit mark for collectable types */
 #define BIT_ISCOLLECTABLE	(1 << 6 )
@@ -118,13 +182,6 @@ using std::endl;
 #define LUAI_GCMUL	200 /* GC runs 'twice the speed' of memory allocation */
 #endif
 
-
-/* value */
-#define val_(o)		((o)->value_)
-
-/* raw type tag for a TValue */
-#define rttype(o)	((o)->tt_)
-
 /*
 **	macros that are executed whenever program enters the LUA core
 **	('lua_lock') and leaves the core ('lua_unclock')
@@ -152,6 +209,9 @@ using std::endl;
 #define LUAI_MAXSTACK	15000
 #endif
 
+/* maximum length of the conversion of a number to a string */
+#define MAXNUMBER2STR	50
+
 
 
 #define LUA_API extern
@@ -171,13 +231,6 @@ typedef _JBTYPE jmp_buf[_JBLEN];
 #define NILCONSTANT {NULL}, LUA_TNIL
 
 /*
-**	macros to set valuse
-*/
-#define settt_(o, t) ((o)->tt_ = (t))
-
-#define setnilvalue(obj) settt_(obj, LUA_TNIL)
-
-/*
 **	位操作
 */
 #define bitmask(b)	(1<<(b))
@@ -190,6 +243,12 @@ typedef _JBTYPE jmp_buf[_JBLEN];
 #define WHITE1BIT	1	/* object is white (type 1) */
 
 #define WHITEBITS bit2mask(WHITE0BIT, WHITE1BIT)
+
+#define otherwhite(g)	((g)->currentwhite ^ WHITEBITS)
+#define isdeadm(ow, m)	(!(((m) ^ WHITEBITS) & (ow)))
+#define isdead(g, v)	isdeadm(otherwhite(g), (v)->marked)
+
+#define changewhite(x)	((x)->marked ^= WHITEBITS)
 
 #define luaC_white(g) cast(lu_byte, (g)->currentwhite & WHITEBITS) /* char */
 
@@ -255,7 +314,12 @@ typedef union {
 } L_Umaxalign;
 
 
-#define CommonHeader GCObject *next;lu_byte tt;lu_byte marked
+
+/*
+**	Common Header for all collectable objects (in macro form, to be
+**	included in other objects)
+*/
+#define CommonHeader	GCObject *next; lu_byte tt; lu_byte marked
 
 /*
 **	lua的基本数据类型
@@ -277,7 +341,7 @@ typedef TValue *StkId;
 /* internal assertions for in-house debugging */
 #define lua_assert(c)		((void)0)
 #define check_exp(c, e)		(e)
-
+#define lua_longassert(c)	((void)0)
 
 /* assertion for checking API calls */
 #define luai_apicheck(l, e) lua_assert(e)
@@ -303,8 +367,16 @@ LUAI_DDEC const TValue luaO_nilobject_;
 
 
 /* string cache */
-#define STRCACHE_N 53
-#define STRCACHE_M 2
+#define STRCACHE_N		53
+#define STRCACHE_M		2
+
+/*
+**	Maximum length for short strings, that is, strings that are
+**	internalized. (Cannot be smaller than reserved words or tags for
+**	metamethods, as these strings must be internazlized;
+**	#("function") = 8, #("__newindex") = 10.)
+*/
+#define LUAI_MAXSHORTLEN	40
 
 /*
 ** Header for string value; string bytes follow the end of this structure
@@ -329,6 +401,13 @@ typedef union UTString{
 	TString tsv;
 } UTString;
 
+
+/*
+**	Get the actual string (array of bytes) from a 'TString'.
+**	(Access to 'extra' ensures that value is really a 'TString'.)
+*/
+#define getstr(ts)	\
+	check_exp(sizeof((ts)->extra), cast(char *, (ts)) + sizeof(UTString))
 
 typedef struct stringtable {
 	TString **hash;
@@ -379,6 +458,12 @@ typedef struct Table {
 	struct Table *metatable;
 	GCObject *gclist;
 } Table;
+
+/*
+**	'moudle' operation for hashing (size is always a power of 2)
+*/
+#define lmod(s, size)	\
+	(check_exp((size & (size - 1)) == 0, (cast(int, (s)&((size) - 1)))))
 
 /*
 **	lua的垃圾回收机制
@@ -502,7 +587,7 @@ typedef struct Proto {
 typedef struct CClosure {
 	ClosureHeader;
 	lua_CFunction f;
-	UpVal *upvals[1];	/* list of upvalues */
+	TValue upvalue[1];	/* list of upvalues */
 } CClosure;
 
 typedef struct LClosure {
@@ -559,24 +644,6 @@ typedef struct global_State {
 
 #define	G(L)	(L->l_G)
 
-/*
-**	Union of all collectable objects (only for conversions)
-*/
-union GCUnion {
-	GCObject gc; /* common header */
-	struct TString ts;
-	struct Udata u;
-	union Closure cl;
-	struct Table h;
-	struct Proto p;
-	struct lua_State th; /* thread */
-};
-
-#define cast_u(o)	cast(union GCUnion *, (o))
-
-/* macros to convert a GCObject into a specific value */
-#define gco2ccl(o)	check_exp((o)->tt == LUA_TCCL, &((cast_u(o))->cl.c))
-
 struct lua_State {
 	CommonHeader;
 	unsigned short nci;
@@ -604,15 +671,87 @@ struct lua_State {
 };
 
 
+/*
+**	Union of all collectable objects (only for conversions)
+*/
+union GCUnion {
+	GCObject gc; /* common header */
+	struct TString ts;
+	struct Udata u;
+	union Closure cl;
+	struct Table h;
+	struct Proto p;
+	struct lua_State th; /* thread */
+};
+
+#define cast_u(o)	cast(union GCUnion *, (o))
+
+/* macros to convert a GCObject into a specific value */
+#define gco2ccl(o)	check_exp((o)->tt == LUA_TCCL, &((cast_u(o))->cl.c))
+
+/* macro to convert a Lua object into a GCObject */
+#define obj2gco(v)	\
+	check_exp(novariant((v)->tt < LUA_TDEADKEY, (&(cast_u(v)->gc))))
+
+/* value */
+#define val_(o)		((o)->value_)
+
+/* raw type tag for a TValue */
+#define rttype(o)	((o)->tt_)
+
+/* tag with no variants (bit 0-3) */
+#define novariant(x)	((x) & 0x0F)
+
+/* type tag of a TValue (bit 0-3 for tags + variant bits 4-5 */
+#define ttype(o)	(rttype(o) & 0x3F)
+
+/* type tag of TValue with novariants bits (0-3) */
+#define ttnov(o)	(novariant(rttype(o)))
+
 /* Macros to test type */
-#define checktag(o, t)	(rttype(o) == (t))
-#define ttisclosure		((rttype(o) & 0x1F) == LUA_TFUNCTION)
-#define ttisCclosure(o)	checktag((o), ctb(LUA_TCCL))
-#define ttislcf(o)	checktag((o), LUA_TLCF)
+#define checktag(o, t)		(rttype(o) == (t))
+#define checktype(o, t)		(ttnov(o) == (t))
+#define ttisnumber(o)	checktype((o), LUA_TNUMBER)
+#define ttisinteger(o)		checktag((o), LUA_TNUMINT)
+#define ttisfloat(o)		checktag((o), LUA_TNUMFLT)
+#define ttisstring(o)		checktype((o), LUA_TSTRING)
+#define ttisclosure			((rttype(o) & 0x1F) == LUA_TFUNCTION)
+#define ttisCclosure(o)		checktag((o), ctb(LUA_TCCL))
+#define ttislcf(o)			checktag((o), LUA_TLCF)
 
 /* Macros to access value */
+#define ivalue(o)	check_exp(ttisinteger(o), val_(o).i)
+#define fltvalue(o)	check_exp(ttisfloat(o), val_(o).n)
+#define gcvalue(o)	check_exp(iscollectable(o), val_(o).gc)
 #define clCvalue(o)	check_exp(ttisCclosure(o), gco2ccl(val_(o).gc))
 
+#define iscollectable(o)	(rttype(o) & BIT_ISCOLLECTABLE)
+
+/* Macros for internal tests */
+#define righttt(obj)	(ttype(obj) == gcvalue(obj)->tt)
+
+#define checkliveness(L, obj)	\
+	lua_longassert(!iscollectable(obj) || \
+	(righttt(obj) && (L == NULL !isdead(G(L), gcvalue(obj)))))
+
+/* macros to set values */
+#define settt_(o, t) ((o)->tt_ = (t))
+
+#define setnilvalue(obj) settt_(obj, LUA_TNIL)
+
+
+#define cvt2str(o)			ttisnumber(o)
+
+#define setsvalue(L, obj, x)	\
+{	TValue *io = (obj); TString *x_ = (x);	\
+	val_(io).gc = obj2gco(x_); settt_(io, ctb(x_->tt));	\
+	checkliveness(L, io);	}
+
+/*
+**	different types of assignments, according to destination
+*/
+/* to stack (not from same stack) */
+#define setsvalue2s setsvalue
 
 //~~ random number begin
 /* random seed */
@@ -662,6 +801,21 @@ static void preinit_thread(lua_State *L, global_State *g);
 */
 static int panic(lua_State *L);
 
+/* 
+**	checks whether short string exists and reuses it or creates a new one
+*/
+TString *internshrstr(lua_State *L, const char *str, size_t l);
+
+/*
+**	new string (with explicit length)
+*/
+TString *luaS_newlstr(lua_State *L, const char *str, size_t l);
+
+/* 
+**	Converts a number to a string
+*/
+void luaO_tostring(lua_State *L, StkId obj);
+
 /*
 **	lua hash
 */
@@ -676,6 +830,7 @@ LUALIB_API lua_State *luaL_newstate(void);
 //~~ LUA_API begin
 LUA_API lua_State *(lua_newstate)(lua_Alloc f, void *ud);
 LUA_API lua_CFunction(lua_atpanic) (lua_State *L, lua_CFunction panicf);
+LUA_API const char *lua_tolstring(lua_State *L, int idx, size_t *len);
 //~~ LUA_API end
 
 #endif
