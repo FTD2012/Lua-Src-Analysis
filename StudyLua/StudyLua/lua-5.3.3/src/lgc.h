@@ -39,9 +39,9 @@
 /*
 ** Possible states of the Garbage Collector
 */
-#define GCSpropagate	0
-#define GCSatomic	1
-#define GCSswpallgc	2
+#define GCSpropagate	0	/* propagate 繁衍 */
+#define GCSatomic	1	/* atomic 原子*/
+#define GCSswpallgc	2	
 #define GCSswpfinobj	3
 #define GCSswptobefnz	4
 #define GCSswpend	5
@@ -81,7 +81,7 @@
 #define WHITE0BIT	0  /* object is white (type 0) */
 #define WHITE1BIT	1  /* object is white (type 1) */
 #define BLACKBIT	2  /* object is black */
-#define FINALIZEDBIT	3  /* object has been marked for finalization */
+#define FINALIZEDBIT	3  /* object has been marked for finalization(完成，终结) */
 /* bit 7 is currently used by tests (luaL_checkmemory) */
 
 #define WHITEBITS	bit2mask(WHITE0BIT, WHITE1BIT)
@@ -96,7 +96,7 @@
 
 #define otherwhite(g)	((g)->currentwhite ^ WHITEBITS)
 #define isdeadm(ow,m)	(!(((m) ^ WHITEBITS) & (ow)))
-#define isdead(g,v)	isdeadm(otherwhite(g), (v)->marked)
+#define isdead(g,v)		isdeadm(otherwhite(g), (v)->marked)
 
 #define changewhite(x)	((x)->marked ^= WHITEBITS)
 #define gray2black(x)	l_setbit((x)->marked, BLACKBIT)

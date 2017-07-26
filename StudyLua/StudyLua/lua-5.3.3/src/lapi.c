@@ -56,22 +56,26 @@ const char lua_ident[] =
 #define api_checkstackindex(l, i, o)  \
 	api_check(l, isstackindex(i, o), "index not in the stack")
 
+/*
+**	从栈中获取数据
+**	http://blog.csdn.net/yanglovefeng/article/details/36005239
+*/
 
 static TValue *index2addr (lua_State *L, int idx) {
   CallInfo *ci = L->ci;
-  if (idx > 0) {
+  if (idx > 0) {	/* 返回 L->ci->func 为栈基址的表元素中第idx 个对象*/
     TValue *o = ci->func + idx;
     api_check(L, idx <= ci->top - (ci->func + 1), "unacceptable index");
     if (o >= L->top) return NONVALIDVALUE;
     else return o;
   }
-  else if (!ispseudo(idx)) {  /* negative index */
+  else if (!ispseudo(idx)) {  /* negative index | 返回L->top 为栈基址的表元素中第idx个对象 */
     api_check(L, idx != 0 && -idx <= L->top - (ci->func + 1), "invalid index");
     return L->top + idx;
   }
-  else if (idx == LUA_REGISTRYINDEX)
+  else if (idx == LUA_REGISTRYINDEX)	/* 下面的都是伪索引(Pseudo-indices) 返回&G->L->l_registry中表对象，用于表示全局表 */
     return &G(L)->l_registry;
-  else {  /* upvalues */
+  else {  /* upvalues | 将idx转化为 c闭包 idxc, 并将 L->ci->func 转化为 c闭包func, 取出闭包函数func 在indx处的upvalue */
     idx = LUA_REGISTRYINDEX - idx;
     api_check(L, idx <= MAXUPVAL + 1, "upvalue index too large");
     if (ttislcf(ci->func))  /* light C function? */
@@ -369,7 +373,24 @@ LUA_API int lua_toboolean (lua_State *L, int idx) {
   return !l_isfalse(o);
 }
 
-
+/*
+**	[-0, +0, m]
+**	const char *lua_tolstring(lua_State *L, int index, size_t *len);
+**	Converts the Lua value at the given acceptable index to a C string.
+**	If len is not NULL, it also sets *len with the string length.
+**	The Lua value must be a string or a number; otherwise, the function returns NULL.
+**	If the value is a number, then lua_tolstring also changes the 
+**	actual value in the stack to a string. (This change confuses 
+**	lua_next when lua_tolstring is applied to keys during a table traversal.)
+**
+**	lua_tolstring returns a fully aligned pointer to a string inside the Lua state.
+**	This string always has a zero('\0') after its last character(as in C), 
+**	but can contain other zeros in its body.Because Lua has garbage collection, 
+**	there is no guarantee that the pointer returned by lua_tolstring 
+**	will be valid after the corresponding value is removed from the stack
+**
+**	REFERENCE:http://pgl.yoyo.org/luai/i/lua_tolstring
+*/
 LUA_API const char *lua_tolstring (lua_State *L, int idx, size_t *len) {
   StkId o = index2addr(L, idx);
   if (!ttisstring(o)) {

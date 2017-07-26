@@ -80,7 +80,7 @@ typedef LUAI_UACNUMBER l_uacNumber;
 typedef LUAI_UACINT l_uacInt;
 
 
-/* internal assertions for in-house debugging */
+/* internal assertions for in-house(机构内部的) debugging */
 #if defined(lua_assert)
 #define check_exp(c,e)		(lua_assert(c), (e))
 /* to avoid problems with conditions too long */
@@ -192,7 +192,7 @@ typedef unsigned long Instruction;
 /*
 ** Size of cache for strings in the API. 'N' is the number of
 ** sets (better be a prime) and "M" is the size of each set (M == 1
-** makes a direct cache.)
+** makes a direct cache (直接高速缓存).)
 */
 #if !defined(STRCACHE_N)
 #define STRCACHE_N		53
@@ -209,6 +209,10 @@ typedef unsigned long Instruction;
 /*
 ** macros that are executed whenever program enters the Lua core
 ** ('lua_lock') and leaves the core ('lua_unlock')
+** 默认情况下，由于同步锁并不包含在标准库中，所以lua_lock实际只是一个空宏，用于用户重写
+**	http://www.cnblogs.com/zhangdongsheng/p/3667796.html
+** 当你想用锁的时候，包含不同的头文件引入不同的宏lock或直接修改上面文件的lock的宏，默认是没有用锁的。lua_state默认是单线程的吧，也就是只要你想，随时都可以弄一套带锁的线程安全的版本（from qq群）
+** 
 */
 #if !defined(lua_lock)
 #define lua_lock(L)	((void) 0)

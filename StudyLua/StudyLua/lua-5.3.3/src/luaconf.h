@@ -698,7 +698,7 @@
 
 /*
 @@ LUAI_MAXSTACK limits the size of the Lua stack.
-** CHANGE it if you need a different limit. This limit is arbitrary;
+** CHANGE it if you need a different limit. This limit is arbitrary(ËæÒâµÄ);
 ** its only purpose is to stop Lua from consuming unlimited stack
 ** space (and to reserve some numbers for pseudo-indices).
 */

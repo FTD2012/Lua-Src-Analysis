@@ -91,7 +91,6 @@ typedef struct CallInfo {
 	lu_byte callstatus;
 } CallInfo;
 
-
 /*
 ** Bits in CallInfo status
 */
@@ -123,7 +122,7 @@ typedef struct global_State {
 	lua_Alloc frealloc;  /* function to reallocate memory */
 	void *ud;         /* auxiliary（辅助的） data to 'frealloc' */
 	l_mem totalbytes;  /* number of bytes currently allocated - GCdebt */
-	l_mem GCdebt;  /* bytes allocated not yet compensated by the collector */
+	l_mem GCdebt;  /* bytes allocated not yet compensated(补偿，抵消) by the collector */
 	lu_mem GCmemtrav;  /* memory traversed by the GC */
 	lu_mem GCestimate;  /* an estimate of the non-garbage memory in use */
 	stringtable strt;  /* hash table for strings | TString 全局字符串哈希表*/
@@ -183,7 +182,7 @@ struct lua_State {
 	int basehookcount;	/* 用户设置的执行时指令数（LUA_MASKCOUNT）下有效*/
 	int hookcount;	/* 运行时，跑了多少条指令（LUA_MASKCOUNT）下有效 */
 	unsigned short nny;  /* number of non-yieldable calls in stack */
-	unsigned short nCcalls;  /* number of nested C calls | 当前C函数的条用深度 */
+	unsigned short nCcalls;  /* number of nested C calls | 当前C函数的调用深度 */
 	l_signalT hookmask;	/* 支持的hook能力定义 #include <lua.h> */
 	lu_byte allowhook;	/* 是否允许hook*/
 };
