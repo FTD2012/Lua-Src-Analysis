@@ -1,3 +1,4 @@
+
 #include "StudyLua.h"
 #include <stdio.h>
 
@@ -10,7 +11,7 @@ static void binarycout(T n) {
 }
 
 
-/* ÎªÊ²Ã´ÒªÔÚÉùÃ÷´¦¶¨ÒåÎªÍâ²¿±äÁ¿£¿ */
+/* ä¸ºä»€ä¹ˆè¦åœ¨å£°æ˜å¤„å®šä¹‰ä¸ºå¤–éƒ¨å˜é‡ï¼Ÿ */
 LUAI_DDEF const TValue luaO_nilobject_ = { NILCONSTANT };
 
 static TValue *index2addr(lua_State *L, int idx) {
@@ -22,7 +23,7 @@ static TValue *index2addr(lua_State *L, int idx) {
 		else return o;
 	}
 	else if (!ispseudo(idx)) {
-		api_check(L, idx !£½ 0 && -idx <= L->top - (ci->func + 1), "invalid index");
+		api_check(L, idx !ï¼ 0 && -idx <= L->top - (ci->func + 1), "invalid index");
 	}
 	else if (idx == LUA_REGISTRYINDEX)
 		return &G(L)->l_registry;
@@ -71,6 +72,15 @@ static void preinit_thread(lua_State *L, global_State *g) {
 
 static int panic(lua_State *L) {
 
+}
+
+int _tmain(int argc, _TCHAR* argv[])
+{	
+	int arr[] = { 1, 3, 8, 90, 100, 455 };
+	std::string str = "123.4";
+	cout << "this is test branch" << endl;
+	char *ch = new char[100];
+	//lua_strx2number(str.c_str(), &ch);
 }
 
 TString *internshrstr(lua_State *L, const char *str, size_t l) {
